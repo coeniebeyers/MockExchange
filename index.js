@@ -1,3 +1,4 @@
+var orderLog = require('./orderLog.js');
 var events = require('./eventEmitter.js');
 var uuid = require('uuid');
 
@@ -171,7 +172,6 @@ function getIndex(startIndex, endIndex, array, order, direction){
       return middleIndex;
     } else {
       console.log('1) Not found:', order);
-      displayOrderBook();
       return null;
     }
   } else if(direction == 'desc' && array[middleIndex].price < order.price){ // bids
@@ -196,7 +196,6 @@ function getIndex(startIndex, endIndex, array, order, direction){
       j++;
     }
     console.log('2) Not found:', order);
-    displayOrderBook();
     return null;
   }
 }
@@ -206,16 +205,14 @@ events.on('displayOrderBook', function(){
 });
 
 function displayOrderBook(){
-  if(bids.length < 5 && asks.length < 5){
-    console.log();
-    console.log('OrderBook:');
-    for(var i = asks.length-1; i >= 0; i--){
-      console.log(asks[i].price + ' | ' + asks[i].amount);
-    }
-    console.log('-');
-    for(var j = 0; j < bids.length; j++){
-      console.log(bids[j].price + ' | ' + bids[j].amount);
-    }
+  console.log();
+  console.log('OrderBook:');
+  for(var i = asks.length-1; i >= 0; i--){
+    console.log(asks[i].price + ' | ' + asks[i].amount);
+  }
+  console.log('-');
+  for(var j = 0; j < bids.length; j++){
+    console.log(bids[j].price + ' | ' + bids[j].amount);
   }
 }
 
@@ -277,26 +274,26 @@ function createCancelOrder(cb){
 
 function createNewOrders(){
   setInterval(function(){
-    for(var i = 0; i < 16000; i++){
+    for(var i = 0; i < 1; i++){
       createOrder(function(order){
         order.orderEmitTime = new Date().getTime(),
         events.emit('newOrder', order);
       });
     }
-  }, 1);  
+  }, 1000);  
 }
 
 function createCancelOrders(){
   setInterval(function(){
     if(bids.length > 1 && asks.length > 1){
-      for(var i = 0; i < 5000; i++){
+      for(var i = 0; i < 1; i++){
         createCancelOrder(function(order){
           order.orderEmitTime = new Date().getTime(),
           events.emit('newOrder', order);
         });
       }
     }
-  }, 1);  
+  }, 1000);  
 }
 
 function run(){
@@ -304,9 +301,9 @@ function run(){
     events.emit('displayStats');
   }, 1000);
 
-  setInterval(function(){
+  /*setInterval(function(){
     events.emit('displayOrderBook');
-  }, 1000);
+  }, 1000);*/
 
   if(startTime == 0){
     startTime = new Date().getTime();
