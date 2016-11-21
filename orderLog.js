@@ -18,14 +18,15 @@ function connectToDB(cb){
   cb();
 };
 
-function logOrder(order, cb){
+function addLog(order, cb){
   if(!db){
     connectToDB(function(){
-      logOrder(order, function(res){
+      addLog(order, function(res){
         cb(res);
       });
     });
   } else {
+    order._id = order.id;
     db.orderLog.insert(order, function(err, docs){
       logError(err);
       cb(docs);
@@ -37,5 +38,5 @@ function closeDB(){
   db.close();
 }
 
-exports.LogOrder = logOrder;
+exports.AddLog = addLog;
 exports.CloseDB = closeDB;
