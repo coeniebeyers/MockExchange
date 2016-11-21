@@ -64,15 +64,17 @@ function updateOrderBook(order){
         bids.splice(0, 0, order);
       } else {
         var i = getPosition(0, bids.length-1, bids, order, 'desc');
-        /*var i = 1; 
-        while(i < bids.length  && order.price < bids[i].price){
-          i++;
-        }*/
         bids.splice(i, 0, order);
       }
+      events.emit('orderLog', order);
     } else { // This bid matches with an ask
-      if(asks[0].amount >= order.amount){
+      if(asks[0].amount > order.amount){
         asks[0].amount -= order.amount;
+        events.emit('orderLog', order);
+      } else if (asks[0].amount == order.amount) { 
+        asks[0].amount -= order.amount;
+        asks.splice(0, 1);
+        events.emit('orderLog', order);
       } else {
         order.amount -= asks[0].amount;
         asks.splice(0, 1);
@@ -86,14 +88,17 @@ function updateOrderBook(order){
         asks.splice(0, 0, order);
       } else {
         var i = getPosition(0, asks.length-1, asks, order, 'asc');
-        /*while(i < asks.length && order.price > asks[i].price){
-          i++;
-        }*/
         asks.splice(i, 0, order);
       }
+      events.emit('orderLog', order);
     } else { // This ask matches with a bid
-      if(bids[0].amount >= order.amount){
+      if(bids[0].amount > order.amount){
         bids[0].amount -= order.amount;
+        events.emit('orderLog', order);
+      } else if (bids[0].amount == order.amount){
+        bids[0].amount -= order.amount;
+        bids.splice(0, 1);
+        events.emit('orderLog', order);
       } else {
         order.amount -= bids[0].amount;
         bids.splice(0, 1);
@@ -102,22 +107,23 @@ function updateOrderBook(order){
     }
   } else if(order.type == 'cancelbid'){
     var i = getIndex(0, bids.length-1, bids, order.orderToCancel, 'desc');
-    /*while(order.orderToCancel && bids[i].id != order.orderToCancel.id && i < bids.length){
-      i++;
-    }*/
     if(i){
       bids.splice(i, 1);
+      events.emit('orderLog', order);
     }
   } else if(order.type == 'cancelask'){
     var i = getIndex(0, asks.length-1, asks, order.orderToCancel, 'asc');
-    /*while(order.orderToCancel && asks[i].id != order.orderToCancel.id && i < asks.length){
-      i++;
-    }*/
     if(i){
       asks.splice(i, 1);
+      events.emit('orderLog', order);
     }
   }
 }
+
+events.on('orderLog', function(order){
+  orderLog.AddLog(order, function(res){
+  });
+});
 
 function getPosition(startIndex, endIndex, array, order, direction){
   var middleIndex = Math.floor((startIndex+endIndex)/2);
@@ -274,26 +280,26 @@ function createCancelOrder(cb){
 
 function createNewOrders(){
   setInterval(function(){
-    for(var i = 0; i < 1; i++){
+    for(var i = 0; i < 1000; i++){
       createOrder(function(order){
         order.orderEmitTime = new Date().getTime(),
         events.emit('newOrder', order);
       });
     }
-  }, 1000);  
+  }, 1);  
 }
 
 function createCancelOrders(){
   setInterval(function(){
     if(bids.length > 1 && asks.length > 1){
-      for(var i = 0; i < 1; i++){
+      for(var i = 0; i < 900; i++){
         createCancelOrder(function(order){
           order.orderEmitTime = new Date().getTime(),
           events.emit('newOrder', order);
         });
       }
     }
-  }, 1000);  
+  }, 1);  
 }
 
 function run(){
