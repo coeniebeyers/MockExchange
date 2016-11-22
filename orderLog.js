@@ -18,6 +18,21 @@ function connectToDB(cb){
   cb();
 };
 
+process.stdin.setEncoding('utf8');
+process.stdin.resume();
+
+process.stdin.on('data', function(orderStr){
+  var orderList = orderStr.split('\n');
+  //console.log('orderList:', orderList);
+  for(var i in orderList){
+    if(orderList[i] != ''){
+      var order = JSON.parse(orderList[i]);
+      addLog(order, function(res){    
+      });
+    }
+  }
+});
+
 function addLog(order, cb){
   if(!db){
     connectToDB(function(){

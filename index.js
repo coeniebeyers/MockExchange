@@ -1,3 +1,17 @@
+var spawn = require('child_process').spawn;
+var child = spawn('node', ['orderLog.js']);  
+
+child.stderr.on('data', function(data){
+  console.log('err data:');
+  console.log(data.toString());
+  console.log('end of err data');
+});
+
+child.stdout.setEncoding('utf8');
+child.stdout.on('data', function(data){
+  console.log('Child response:', data);
+});
+
 var orderLog = require('./orderLog.js');
 var events = require('./eventEmitter.js');
 var uuid = require('uuid');
@@ -66,16 +80,31 @@ function updateOrderBook(order){
         var i = getPosition(0, bids.length-1, bids, order, 'desc');
         bids.splice(i, 0, order);
       }
-      events.emit('orderLog', order);
     } else { // This bid matches with an ask
       if(asks[0].amount > order.amount){
+        var match = {
+          order1: asks[0],
+          order2: order,
+          amount: order.amount
+        };
+        events.emit('matched', match);
         asks[0].amount -= order.amount;
-        events.emit('orderLog', order);
       } else if (asks[0].amount == order.amount) { 
+        var match = {
+          order1: asks[0],
+          order2: order,
+          amount: order.amount
+        };
+        events.emit('matched', match);
         asks[0].amount -= order.amount;
         asks.splice(0, 1);
-        events.emit('orderLog', order);
       } else {
+        var match = {
+          order1: asks[0],
+          order2: order,
+          amount: asks[0].amount
+        };
+        events.emit('matched', match);
         order.amount -= asks[0].amount;
         asks.splice(0, 1);
         updateOrderBook(order);
@@ -90,16 +119,31 @@ function updateOrderBook(order){
         var i = getPosition(0, asks.length-1, asks, order, 'asc');
         asks.splice(i, 0, order);
       }
-      events.emit('orderLog', order);
     } else { // This ask matches with a bid
       if(bids[0].amount > order.amount){
+        var match = {
+          order1: bids[0],
+          order2: order,
+          amount: order.amount
+        };
+        events.emit('matched', match);
         bids[0].amount -= order.amount;
-        events.emit('orderLog', order);
       } else if (bids[0].amount == order.amount){
+        var match = {
+          order1: bids[0],
+          order2: order,
+          amount: order.amount
+        };
+        events.emit('matched', match);
         bids[0].amount -= order.amount;
         bids.splice(0, 1);
-        events.emit('orderLog', order);
       } else {
+        var match = {
+          order1: bids[0],
+          order2: order,
+          amount: bids[0].amount
+        };
+        events.emit('matched', match);
         order.amount -= bids[0].amount;
         bids.splice(0, 1);
         updateOrderBook(order);
@@ -109,21 +153,14 @@ function updateOrderBook(order){
     var i = getIndex(0, bids.length-1, bids, order.orderToCancel, 'desc');
     if(i){
       bids.splice(i, 1);
-      events.emit('orderLog', order);
     }
   } else if(order.type == 'cancelask'){
     var i = getIndex(0, asks.length-1, asks, order.orderToCancel, 'asc');
     if(i){
       asks.splice(i, 1);
-      events.emit('orderLog', order);
     }
   }
 }
-
-events.on('orderLog', function(order){
-  orderLog.AddLog(order, function(res){
-  });
-});
 
 function getPosition(startIndex, endIndex, array, order, direction){
   var middleIndex = Math.floor((startIndex+endIndex)/2);
@@ -278,9 +315,17 @@ function createCancelOrder(cb){
   cb(order);
 }
 
+events.on('matched', function(match){
+  child.stdin.write('\n'); 
+  child.stdin.write(JSON.stringify(match)); 
+  child.stdin.write('\n'); 
+  //orderLog.AddLog(order, function(res){
+  //});
+});
+
 function createNewOrders(){
   setInterval(function(){
-    for(var i = 0; i < 1000; i++){
+    for(var i = 0; i < 10; i++){
       createOrder(function(order){
         order.orderEmitTime = new Date().getTime(),
         events.emit('newOrder', order);
@@ -292,7 +337,7 @@ function createNewOrders(){
 function createCancelOrders(){
   setInterval(function(){
     if(bids.length > 1 && asks.length > 1){
-      for(var i = 0; i < 900; i++){
+      for(var i = 0; i < 9; i++){
         createCancelOrder(function(order){
           order.orderEmitTime = new Date().getTime(),
           events.emit('newOrder', order);
@@ -303,6 +348,7 @@ function createCancelOrders(){
 }
 
 function run(){
+
   setInterval(function(){
     events.emit('displayStats');
   }, 1000);
