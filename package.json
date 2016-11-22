@@ -17,6 +17,7 @@
     "url": "https://github.com//exchange/issues"
   },
   "dependencies": {
+    "async": "^2.1.2",
     "mongojs": "^2.4.0",
     "uuid": "^2.0.3"
   },
