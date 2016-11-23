@@ -1,3 +1,4 @@
+var async = require('async');
 var spawn = require('child_process').spawn;
 var child = spawn('node', ['orderLog.js']);  
 
@@ -16,58 +17,36 @@ var orderLog = require('./orderLog.js');
 var events = require('./eventEmitter.js');
 var uuid = require('uuid');
 
-var maxEmitTime = 0;
-var avgEmitTime = 0;
-
-var maxOrderCreationTime = 0;
-var avgOrderCreationTime = 0;
-
-var maxOps = 0;
 var avgOps = 0;
 
 var orderCount = 0;
+var matchedTrades = 0;
 var startTime = 0;
+
+// Asks: willing to sell currency1 for currency2
+var asks = [];
+// Bids: willing to buy currency1 with currency2
+var bids = [];
+
+var lastTraded = null;
 
 events.on('displayStats', function(){
   console.log('---');
-  console.log('maxOrderCreationTime:', maxOrderCreationTime, 'ms');
-  console.log('avgOrderCreationTime:', avgOrderCreationTime, 'ms');
-  console.log('maxEmitTime:', maxEmitTime, 'ms');
-  console.log('avgEmitTime:', avgEmitTime, 'ms');
   console.log('avgOps:', avgOps);
+  console.log('matched trades:', matchedTrades);
   console.log('bids.length:', bids.length);
   console.log('asks.length:', asks.length);
+  console.log('last trade:', lastTraded); 
 });
-
-var bids = [];
-var asks = [];
 
 events.on('newOrder', function(order){
   var arrivalTime = new Date().getTime();
   orderCount++;
-
-  var orderCreationTime = arrivalTime - order.timestamp;
-  var emitTime = arrivalTime - order.orderEmitTime;
-
-  // Order creation
-  var orderTimeDiff = orderCreationTime - avgOrderCreationTime;
-  avgOrderCreationTime += orderTimeDiff/orderCount;
-  if(orderCreationTime > maxOrderCreationTime){
-    maxOrderCreationTime = orderCreationTime;
-  }
-  // Event emitter
-  var emitTimeDiff = emitTime - avgEmitTime;
-  avgEmitTime += emitTimeDiff/orderCount;
-  if(emitTime > maxEmitTime){
-    maxEmitTime = emitTime;
-  }
   // Operation processing
   var elapsedStartTime = (arrivalTime - startTime)/1000;
   avgOps = orderCount/elapsedStartTime; 
 
-  //console.log('---\norder:', order);
   updateOrderBook(order);
-  //events.emit('displayOrderBook');
 });
 
 function updateOrderBook(order){
@@ -274,22 +253,6 @@ function getOffer(){
   return {price: price, amount: amount};
 }
 
-// Assume just one currency pair right now, BTCUSD
-function createOrder(cb){
-  var orderTimestamp = new Date().getTime();  
-  var orderId = uuid.v1();
-  var bidOrAsk = getBidOrAsk();
-  var offer = getOffer();
-  var order = {
-    timestamp: orderTimestamp,
-    id: orderId,
-    type: bidOrAsk,
-    price: offer.price,
-    amount: offer.amount
-  };
-  cb(order);
-}
-
 function getRandomOrder(bidOrAsk){
   if(bidOrAsk == 'bid'){
     var rInt = Math.floor(Math.random() * (bids.length-1));
@@ -315,13 +278,80 @@ function createCancelOrder(cb){
   cb(order);
 }
 
+// This hands the logging of matched order to the child thread
 events.on('matched', function(match){
   child.stdin.write('\n'); 
   child.stdin.write(JSON.stringify(match)); 
   child.stdin.write('\n'); 
-  //orderLog.AddLog(order, function(res){
-  //});
 });
+
+events.on('matched', function(match){
+  matchedTrades++;
+});
+
+events.on('matched', function(match){
+  lastTraded = {
+    price: match.order1.price,
+    amount: match.amount
+  };
+});
+
+var accountList = [];
+var accountBalance = 100;
+
+function createAccounts(){
+  for(var i = 0; i < 5; i++){
+    accountList.push({
+      currency1: accountBalance,
+      currency2: accountBalance,
+      id: uuid.v1() 
+    });
+  }
+}
+
+function getAccountOrders(accountId, cb){
+  async.filter(bids.concat(asks), function(order, callback){
+    callback(null, order.accountId == accountId);
+  }, function(err, accountOrders){
+    cb(accountOrders);
+  }); 
+}
+
+// Asks: willing to sell currency1 for currency2
+// Bids: willing to buy currency1 with currency2
+// Assume just one currency pair right now, BTCUSD
+function createOrder(cb){
+  // Choose an account
+  var accountNr = Math.floor((Math.random() * accountList.length) + 1);
+  var account = accountList[accountNr];
+  // Get open orders for account
+  getAccountOrders(account.id, function(accountOrders){ 
+    var totalCurrency1 = 0;
+    var totalCurrency2 = 0;    
+    for(var i in accountOrders){
+      var accountOrder = accountOrders[i];
+      if(accountOrder.type == 'ask'){
+        totalCurrency1 += accountOrder.amount;
+      } else if(accountOrder.type == 'bid'){
+        totalCurrency2 += accountOrder.amount;
+      }
+    }
+ 
+    var orderTimestamp = new Date().getTime();  
+    var orderId = uuid.v1();
+    var bidOrAsk = getBidOrAsk();
+    var offer = getOffer();
+    var order = {
+      timestamp: orderTimestamp,
+      id: orderId,
+      accountId: accountId,
+      type: bidOrAsk,
+      price: offer.price,
+      amount: offer.amount
+    };
+    cb(order);
+  });
+}
 
 function createNewOrders(){
   setInterval(function(){
@@ -331,7 +361,7 @@ function createNewOrders(){
         events.emit('newOrder', order);
       });
     }
-  }, 1);  
+  }, 1000);  
 }
 
 function createCancelOrders(){
@@ -344,7 +374,7 @@ function createCancelOrders(){
         });
       }
     }
-  }, 1);  
+  }, 1000);  
 }
 
 function run(){
@@ -353,14 +383,10 @@ function run(){
     events.emit('displayStats');
   }, 1000);
 
-  /*setInterval(function(){
-    events.emit('displayOrderBook');
-  }, 1000);*/
-
   if(startTime == 0){
     startTime = new Date().getTime();
   }
-
+  createAccounts();
   createNewOrders();
   createCancelOrders();
 }
