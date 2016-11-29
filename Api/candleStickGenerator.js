@@ -45,9 +45,11 @@ function getOHLCCandles(startTime, endTime, tradeList, candleSize, cb){
  var endOfCurrentCandle = startTime + candleSize;
  var numberOfCandles = calculateNumberOfCandles(startTime, endTime, candleSize);
 
- var trade = { timestamp: startTime, amount: 0, price: 0 }
-
+ var trade = { timestamp: startTime, amount: 0, price: 0 };
  var tradeListIndex = 0;
+ if(tradeList.length>0){
+    trade = tradeList[tradeListIndex];
+ }
  var candleList = [];
 
  for(var i = 0; i < numberOfCandles; i++){
@@ -75,7 +77,7 @@ function getOHLCCandles(startTime, endTime, tradeList, candleSize, cb){
      var close = open;
      var volume = 0;
 
-     for(;trade && trade.timestamp <= endOfCurrentCandle && tradeListIndex < tradeList.length;){
+     for(;trade && trade.timestamp <= endOfCurrentCandle && tradeListIndex < (tradeList.length-1);){
        var tradePrice = Number(trade.price);
        if(tradePrice > high){
          high = tradePrice;
@@ -85,7 +87,7 @@ function getOHLCCandles(startTime, endTime, tradeList, candleSize, cb){
        }
        volume += Number(trade.amount);
 
-       if(tradeListIndex < tradeList.length){
+       if(tradeListIndex < (tradeList.length-1)){
          tradeListIndex++;
        }
        trade = tradeList[tradeListIndex];
