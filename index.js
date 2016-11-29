@@ -39,6 +39,24 @@ events.on('displayStats', function(){
   console.log('last trade:', lastTraded); 
 });
 
+// Update amounts reserved 
+/*events.on('newOrder', function(order){
+  var account = accountList[order.accountId];
+  if(order.type == 'ask'){
+    var amount = order.amount;
+    account.reservedCurrency1 += amount;
+  } else if(order.type == 'cancelask'){
+    var amount = order.amount;
+    account.reservedCurrency1 -= amount;
+  } else if(order.type == 'bid'){
+    var amount = order.amount * order.price;
+    account.reservedCurrency2 += amount;
+  } else if(order.type == 'cancelbid'){
+    var amount = order.amount * order.price;
+    account.reservedCurrency2 -= amount;
+  }
+});*/
+
 events.on('newOrder', function(order){
   var arrivalTime = new Date().getTime();
   orderCount++;
@@ -66,26 +84,29 @@ function updateOrderBook(order){
           order2: order,
           amount: order.amount
         };
-        events.emit('matched', match);
+        events.emit('prematch', match);
         asks[0].amount -= order.amount;
+        events.emit('matched', match);
       } else if (asks[0].amount == order.amount) { 
         var match = {
           order1: asks[0],
           order2: order,
           amount: order.amount
         };
-        events.emit('matched', match);
+        events.emit('prematch', match);
         asks[0].amount -= order.amount;
         asks.splice(0, 1);
+        events.emit('matched', match);
       } else {
         var match = {
           order1: asks[0],
           order2: order,
           amount: asks[0].amount
         };
-        events.emit('matched', match);
+        events.emit('prematch', match);
         order.amount -= asks[0].amount;
         asks.splice(0, 1);
+        events.emit('matched', match);
         updateOrderBook(order);
       }
     }
@@ -105,26 +126,29 @@ function updateOrderBook(order){
           order2: order,
           amount: order.amount
         };
-        events.emit('matched', match);
+        events.emit('prematch', match);
         bids[0].amount -= order.amount;
+        events.emit('matched', match);
       } else if (bids[0].amount == order.amount){
         var match = {
           order1: bids[0],
           order2: order,
           amount: order.amount
         };
-        events.emit('matched', match);
+        events.emit('prematch', match);
         bids[0].amount -= order.amount;
         bids.splice(0, 1);
+        events.emit('matched', match);
       } else {
         var match = {
           order1: bids[0],
           order2: order,
           amount: bids[0].amount
         };
-        events.emit('matched', match);
+        events.emit('prematch', match);
         order.amount -= bids[0].amount;
         bids.splice(0, 1);
+        events.emit('matched', match);
         updateOrderBook(order);
       }
     }
@@ -249,7 +273,7 @@ function getBidOrAsk(){
 
 function getOffer(){
   var price = (Math.floor((Math.random() * 1000) + 1))/100;
-  var amount = (Math.floor((Math.random() * 1000) + 1))/100;
+  var amount = (Math.floor((Math.random() * 10000) + 1))/100;
   return {price: price, amount: amount};
 }
 
@@ -278,6 +302,20 @@ function createCancelOrder(cb){
   cb(order);
 }
 
+events.on('prematch', function(match){
+  /*auditTotals();
+  console.log('--- prematch');
+  calculateOpenInterest(match.order1.accountId, function(openInterest1){
+    calculateOpenInterest(match.order2.accountId, function(openInterest2){
+      console.log('openInterest1:', openInterest1);
+      displayAccountInformation(match.order1.accountId);
+      console.log('openInterest2:', openInterest2);
+      displayAccountInformation(match.order2.accountId);
+      console.log('match:', match); 
+    });
+  });*/
+});
+
 // This hands the logging of matched order to the child thread
 events.on('matched', function(match){
   child.stdin.write('\n'); 
@@ -290,11 +328,59 @@ events.on('matched', function(match){
 });
 
 events.on('matched', function(match){
+  updateAccountBalances(match);
+  /*console.log('--- postmatch');
+  displayAccountInformation(match.order1.accountId);
+  displayAccountInformation(match.order2.accountId);
+  auditTotals();
+  auditOrdersToReservedBalances(match.order1.accountId);
+  auditOrdersToReservedBalances(match.order2.accountId);*/
+});
+
+function updateAccountBalances(match){
+  var currency1Amount = match.amount;
+  //console.log('currency1Amount:', currency1Amount);
+  var currency2Amount = match.order1.price * currency1Amount;
+  //console.log('currency2Amount:', currency2Amount);
+  if(match.order1.type == 'ask'){
+    accountList[match.order1.accountId].currency1 -= currency1Amount;
+    accountList[match.order1.accountId].reservedCurrency1 -= currency1Amount;
+    accountList[match.order1.accountId].currency2 += currency2Amount;
+
+    accountList[match.order2.accountId].currency1 += currency1Amount;
+    accountList[match.order2.accountId].currency2 -= currency2Amount;
+    accountList[match.order2.accountId].reservedCurrency2 -= (match.order2.price*currency1Amount);
+  } else if(match.order1.type == 'bid') { 
+    accountList[match.order1.accountId].currency1 += currency1Amount;
+    accountList[match.order1.accountId].currency2 -= currency2Amount;
+    accountList[match.order1.accountId].reservedCurrency2 -= (match.order2.price*currency1Amount);
+
+    accountList[match.order2.accountId].currency1 -= currency1Amount;
+    accountList[match.order2.accountId].reservedCurrency1 -= currency1Amount;
+    accountList[match.order2.accountId].currency2 += currency2Amount;
+  } 
+}
+
+events.on('matched', function(match){
   lastTraded = {
     price: match.order1.price,
     amount: match.amount
   };
 });
+
+function auditTotals(){
+  var totalCurrency1 = 0;
+  var totalCurrency2 = 0;
+  for(var i in accountList){
+    var account = accountList[i];
+    totalCurrency1 += account.currency1;
+    totalCurrency2 += account.currency2; 
+  }  
+
+  if(Math.abs(totalCurrency1 - 500) > 1 || Math.abs(totalCurrency2 - 500) > 1){
+    console.log('ERROR: Audited totals: '+'\nBTC: '+totalCurrency1+'\nUSD: '+totalCurrency2);
+  }
+}
 
 var accountList = [];
 var accountBalance = 100;
@@ -303,8 +389,10 @@ function createAccounts(){
   for(var i = 0; i < 5; i++){
     accountList.push({
       currency1: accountBalance,
+      reservedCurrency1: 0,
       currency2: accountBalance,
-      id: uuid.v1() 
+      reservedCurrency2: 0,
+      id: i 
     });
   }
 }
@@ -317,13 +405,8 @@ function getAccountOrders(accountId, cb){
   }); 
 }
 
-// Asks: willing to sell currency1 for currency2
-// Bids: willing to buy currency1 with currency2
-// Assume just one currency pair right now, BTCUSD
-function createOrder(cb){
-  // Choose an account
-  var accountNr = Math.floor((Math.random() * accountList.length) + 1);
-  var account = accountList[accountNr];
+function calculateOpenInterest(accountId, cb){
+  var account = accountList[accountId];
   // Get open orders for account
   getAccountOrders(account.id, function(accountOrders){ 
     var totalCurrency1 = 0;
@@ -333,41 +416,100 @@ function createOrder(cb){
       if(accountOrder.type == 'ask'){
         totalCurrency1 += accountOrder.amount;
       } else if(accountOrder.type == 'bid'){
-        totalCurrency2 += accountOrder.amount;
+        totalCurrency2 += (accountOrder.amount * accountOrder.price);
       }
     }
- 
-    var orderTimestamp = new Date().getTime();  
-    var orderId = uuid.v1();
-    var bidOrAsk = getBidOrAsk();
-    var offer = getOffer();
-    var order = {
-      timestamp: orderTimestamp,
-      id: orderId,
-      accountId: accountId,
-      type: bidOrAsk,
-      price: offer.price,
-      amount: offer.amount
-    };
-    cb(order);
+    cb({
+      totalCurrency1: totalCurrency1, 
+      totalCurrency2: totalCurrency2
+    });
   });
+}
+
+function auditOrdersToReservedBalances(accountId){
+  calculateOpenInterest(accountId, function(openInterest){
+    var totalCurrency1 = openInterest.totalCurrency1;
+    var totalCurrency2 = openInterest.totalCurrency2;
+    var account = accountList[accountId];
+    var reservedCurrency1 = account.reservedCurrency1;
+    var reservedCurrency2 = account.reservedCurrency2;
+
+    if(totalCurrency1 != reservedCurrency1 || totalCurrency2 != reservedCurrency2){
+      console.log('ERROR: Mismatch between open orders and reserved balance for account:', accountId);
+      console.log('totalCurrency1:', totalCurrency1);
+      console.log('account.reservedCurrency1:', reservedCurrency1);
+      console.log('totalCurrency2:', totalCurrency2);
+      console.log('account.reservedCurrency2:', reservedCurrency2);
+    } else {
+      console.log('Audit passed');
+    }
+  });
+}
+
+events.on('displayAccounts', function(){
+  console.log('---');
+  for(var i in accountList){
+    displayAccountInformation(i);
+  }
+});
+
+function displayAccountInformation(accountId){
+  var account = accountList[accountId];
+  console.log('accountNr:', accountId);
+  console.log('Balances:');
+  console.log('BTC: '+account.currency1+' | USD: '+account.currency2);
+  console.log('Reserved balances:');
+  console.log('BTC: '+account.reservedCurrency1+' | USD: '+account.reservedCurrency2);
+}
+
+// Asks: willing to sell currency1 for currency2
+// Bids: willing to buy currency1 with currency2
+// Assume just one currency pair right now, BTCUSD
+function createOrder(cb){
+  // Choose an account
+  var accountNr = Math.floor((Math.random() * (accountList.length-1)) + 1);
+  var account = accountList[accountNr];
+
+  var orderTimestamp = new Date().getTime();  
+  var orderId = uuid.v1();
+  var bidOrAsk = getBidOrAsk();
+  var offer = getOffer();
+  var order = {
+    timestamp: orderTimestamp,
+    id: orderId,
+    accountId: account.id,
+    type: bidOrAsk,
+    price: offer.price,
+    amount: offer.amount
+  };
+
+  if(order.type == 'ask' && order.amount > (account.currency1 - account.reservedCurrency1)){
+    cb(null); 
+  } else if(order.type == 'bid' 
+      && (order.amount*order.price) > (account.currency2 - account.reservedCurrency2)){
+    cb(null)
+  } else {
+    cb(order);
+  }
 }
 
 function createNewOrders(){
   setInterval(function(){
-    for(var i = 0; i < 10; i++){
+    for(var i = 0; i < 1; i++){
       createOrder(function(order){
-        order.orderEmitTime = new Date().getTime(),
-        events.emit('newOrder', order);
+        if(order){
+          order.orderEmitTime = new Date().getTime(),
+          events.emit('newOrder', order);
+        }
       });
     }
-  }, 1000);  
+  }, 100);  
 }
 
 function createCancelOrders(){
   setInterval(function(){
     if(bids.length > 1 && asks.length > 1){
-      for(var i = 0; i < 9; i++){
+      for(var i = 0; i < 1; i++){
         createCancelOrder(function(order){
           order.orderEmitTime = new Date().getTime(),
           events.emit('newOrder', order);
@@ -382,6 +524,10 @@ function run(){
   setInterval(function(){
     events.emit('displayStats');
   }, 1000);
+
+  /*setInterval(function(){
+    events.emit('displayAccounts');
+  }, 1000);*/
 
   if(startTime == 0){
     startTime = new Date().getTime();
