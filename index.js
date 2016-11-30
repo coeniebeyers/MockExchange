@@ -2,6 +2,17 @@ var async = require('async');
 var spawn = require('child_process').spawn;
 var child = spawn('node', ['orderLog.js']);  
 
+var config = {
+  currency1: {
+    name: 'BTC',
+    decimals: 8
+  },
+  currency2: {
+    name: 'USD',
+    decimals: 2
+  }
+}
+
 child.stderr.on('data', function(data){
   console.log('err data:');
   console.log(data.toString());
@@ -408,8 +419,8 @@ function auditOrdersToReservedBalances(){
     var reservedCurrency1 = account.reservedCurrency1;
     var reservedCurrency2 = account.reservedCurrency2;
 
-    if(Math.abs(totalCurrency1-reservedCurrency1) > 1 
-        || Math.abs(totalCurrency2-reservedCurrency2) > 1){
+    if(Math.abs(totalCurrency1-reservedCurrency1) > 0 
+        || Math.abs(totalCurrency2-reservedCurrency2) > 0){
       console.log('ERROR: Mismatch between open orders and reserved balance for account:', accountId);
       console.log('totalCurrency1:', totalCurrency1);
       console.log('account.reservedCurrency1:', reservedCurrency1);
