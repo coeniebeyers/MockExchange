@@ -40,7 +40,7 @@ events.on('displayStats', function(){
 });
 
 // Update amounts reserved 
-/*events.on('newOrder', function(order){
+events.on('newOrder', function(order){
   var account = accountList[order.accountId];
   if(order.type == 'ask'){
     var amount = order.amount;
@@ -55,7 +55,7 @@ events.on('displayStats', function(){
     var amount = order.amount * order.price;
     account.reservedCurrency2 -= amount;
   }
-});*/
+});
 
 events.on('newOrder', function(order){
   var arrivalTime = new Date().getTime();
@@ -84,30 +84,34 @@ function updateOrderBook(order){
           order2: order,
           amount: order.amount
         };
-        events.emit('prematch', match);
-        asks[0].amount -= order.amount;
         events.emit('matched', match);
+        asks[0].amount -= order.amount;
+        events.emit('matchExecuted', match);
+        events.emit('orderExecuted', order);
       } else if (asks[0].amount == order.amount) { 
         var match = {
           order1: asks[0],
           order2: order,
           amount: order.amount
         };
-        events.emit('prematch', match);
+        events.emit('matched', match);
         asks[0].amount -= order.amount;
         asks.splice(0, 1);
-        events.emit('matched', match);
+        events.emit('matchExecuted', match);
+        events.emit('orderExecuted', order);
       } else {
         var match = {
           order1: asks[0],
           order2: order,
           amount: asks[0].amount
         };
-        events.emit('prematch', match);
-        order.amount -= asks[0].amount;
-        asks.splice(0, 1);
         events.emit('matched', match);
-        updateOrderBook(order);
+        var newOrder = Object.assign({}, order); 
+        newOrder.amount -= asks[0].amount;
+        newOrder.parentOrder = order;
+        asks.splice(0, 1);
+        events.emit('matchExecuted', match);
+        updateOrderBook(newOrder);
       }
     }
   } else if(order.type == 'ask'){ // order.type ask
@@ -126,30 +130,34 @@ function updateOrderBook(order){
           order2: order,
           amount: order.amount
         };
-        events.emit('prematch', match);
-        bids[0].amount -= order.amount;
         events.emit('matched', match);
+        bids[0].amount -= order.amount;
+        events.emit('matchExecuted', match);
+        events.emit('orderExecuted', order);
       } else if (bids[0].amount == order.amount){
         var match = {
           order1: bids[0],
           order2: order,
           amount: order.amount
         };
-        events.emit('prematch', match);
+        events.emit('matched', match);
         bids[0].amount -= order.amount;
         bids.splice(0, 1);
-        events.emit('matched', match);
+        events.emit('matchExecuted', match);
+        events.emit('orderExecuted', order);
       } else {
         var match = {
           order1: bids[0],
           order2: order,
           amount: bids[0].amount
         };
-        events.emit('prematch', match);
-        order.amount -= bids[0].amount;
-        bids.splice(0, 1);
         events.emit('matched', match);
-        updateOrderBook(order);
+        var newOrder = Object.assign({}, order); 
+        newOrder.amount -= bids[0].amount;
+        newOrder.parentOrder = order;
+        bids.splice(0, 1);
+        events.emit('matchExecuted', match);
+        updateOrderBook(newOrder);
       }
     }
   } else if(order.type == 'cancelbid'){
@@ -262,6 +270,166 @@ function displayOrderBook(){
   }
 }
 
+events.on('matched', function(match){
+  auditTotals();
+  /*console.log('--- matched');
+  var openInterest1 = calculateOpenInterest(match.order1.accountId);
+  console.log('openInterest1:', openInterest1);
+  displayAccountInformation(match.order1.accountId);
+
+  var openInterest2 = calculateOpenInterest(match.order2.accountId);
+  console.log('openInterest2:', openInterest2);
+  displayAccountInformation(match.order2.accountId);
+  console.log('match:', match); */
+});
+
+// This hands the logging of matched order to the child thread
+events.on('matchExecuted', function(match){
+  child.stdin.write('\n'); 
+  child.stdin.write(JSON.stringify(match)); 
+  child.stdin.write('\n'); 
+});
+
+events.on('matchExecuted', function(match){
+  matchedTrades++;
+});
+
+events.on('matchExecuted', function(match){
+  updateAccountBalances(match);
+  auditTotals();
+  /*console.log('--- matchExecuted');
+  displayAccountInformation(match.order1.accountId);
+  displayAccountInformation(match.order2.accountId);*/
+});
+
+events.on('orderExecuted', function(order){
+  auditOrdersToReservedBalances();
+});
+
+function updateAccountBalances(match){
+  var currency1Amount = match.amount;
+  //console.log('currency1Amount:', currency1Amount);
+  var currency2Amount = match.order1.price * currency1Amount;
+  //console.log('currency2Amount:', currency2Amount);
+  if(match.order1.type == 'ask'){
+    accountList[match.order1.accountId].currency1 -= currency1Amount;
+    accountList[match.order1.accountId].reservedCurrency1 -= currency1Amount;
+    accountList[match.order1.accountId].currency2 += currency2Amount;
+
+    accountList[match.order2.accountId].currency1 += currency1Amount;
+    accountList[match.order2.accountId].currency2 -= currency2Amount;
+    accountList[match.order2.accountId].reservedCurrency2 -= (match.order2.price*currency1Amount);
+  } else if(match.order1.type == 'bid') { 
+    accountList[match.order1.accountId].currency1 += currency1Amount;
+    accountList[match.order1.accountId].currency2 -= currency2Amount;
+    accountList[match.order1.accountId].reservedCurrency2 -= currency2Amount;
+
+    accountList[match.order2.accountId].currency1 -= currency1Amount;
+    accountList[match.order2.accountId].reservedCurrency1 -= currency1Amount;
+    accountList[match.order2.accountId].currency2 += currency2Amount;
+  } 
+}
+
+events.on('matchExecuted', function(match){
+  lastTraded = {
+    price: match.order1.price,
+    amount: match.amount
+  };
+});
+
+function auditTotals(){
+  var totalCurrency1 = 0;
+  var totalCurrency2 = 0;
+  for(var i in accountList){
+    var account = accountList[i];
+    totalCurrency1 += account.currency1;
+    totalCurrency2 += account.currency2; 
+  }  
+
+  if(Math.abs(totalCurrency1 - 100*accountList.length) > 1 
+      || Math.abs(totalCurrency2 - 100*accountList.length) > 1){
+    console.log('ERROR: Audited totals: '+'\nBTC: '+totalCurrency1+'\nUSD: '+totalCurrency2);
+  }
+}
+
+var accountList = [];
+var accountBalance = 100;
+
+function createAccounts(){
+  for(var i = 0; i < 5; i++){
+    accountList.push({
+      currency1: accountBalance,
+      reservedCurrency1: 0,
+      currency2: accountBalance,
+      reservedCurrency2: 0,
+      id: i 
+    });
+  }
+}
+
+function getCopyOfAccountOrders(accountId, cb){
+  var accountOrders = [];
+  var bidsAndAsks = bids.concat(asks);
+  for(var i in bidsAndAsks){
+    if(bidsAndAsks[i].accountId == accountId){
+      accountOrders.push(bidsAndAsks[i]);
+    }
+  }
+  return accountOrders;
+}
+
+function calculateOpenInterest(accountId, cb){
+  var account = accountList[accountId];
+  // Get open orders for account
+  accountOrders = getCopyOfAccountOrders(account.id);
+  var totalCurrency1 = 0;
+  var totalCurrency2 = 0;    
+  for(var i in accountOrders){
+    var accountOrder = accountOrders[i];
+    if(accountOrder.type == 'ask'){
+      totalCurrency1 += accountOrder.amount;
+    } else if(accountOrder.type == 'bid'){
+      totalCurrency2 += (accountOrder.amount * accountOrder.price);
+    }
+  }
+  var obj = {
+    totalCurrency1: totalCurrency1, 
+    totalCurrency2: totalCurrency2
+  };
+  return obj;
+}
+
+function auditOrdersToReservedBalances(){
+  for(var accountId in accountList){
+    var openInterest = calculateOpenInterest(accountId)
+    var totalCurrency1 = openInterest.totalCurrency1;
+    var totalCurrency2 = openInterest.totalCurrency2;
+    var account = accountList[accountId];
+    var reservedCurrency1 = account.reservedCurrency1;
+    var reservedCurrency2 = account.reservedCurrency2;
+
+    if(Math.abs(totalCurrency1-reservedCurrency1) > 1 
+        || Math.abs(totalCurrency2-reservedCurrency2) > 1){
+      console.log('ERROR: Mismatch between open orders and reserved balance for account:', accountId);
+      console.log('totalCurrency1:', totalCurrency1);
+      console.log('account.reservedCurrency1:', reservedCurrency1);
+      console.log('totalCurrency2:', totalCurrency2);
+      console.log('account.reservedCurrency2:', reservedCurrency2);
+    } else {
+      //console.log('Audit passed');
+    }
+  }
+}
+
+function displayAccountInformation(accountId){
+  var account = accountList[accountId];
+  console.log('accountNr:', accountId);
+  console.log('Balances:');
+  console.log('BTC: '+account.currency1+' | USD: '+account.currency2);
+  console.log('Reserved balances:');
+  console.log('BTC: '+account.reservedCurrency1+' | USD: '+account.reservedCurrency2);
+}
+
 function getBidOrAsk(){
   var res = Math.random() >= 0.5;
   if(res){
@@ -273,7 +441,7 @@ function getBidOrAsk(){
 
 function getOffer(){
   var price = (Math.floor((Math.random() * 1000) + 1))/100;
-  var amount = (Math.floor((Math.random() * 10000) + 1))/100;
+  var amount = (Math.floor((Math.random() * 100) + 1))/100;
   return {price: price, amount: amount};
 }
 
@@ -296,170 +464,13 @@ function createCancelOrder(cb){
   var order = {
     timestamp: orderTimestamp,
     id: orderId,
+    accountId: orderToCancel.accountId,
     type: bidOrAsk,
+    price: orderToCancel.price,
+    amount: orderToCancel.amount,
     orderToCancel: orderToCancel,
   };
   cb(order);
-}
-
-events.on('prematch', function(match){
-  /*auditTotals();
-  console.log('--- prematch');
-  calculateOpenInterest(match.order1.accountId, function(openInterest1){
-    calculateOpenInterest(match.order2.accountId, function(openInterest2){
-      console.log('openInterest1:', openInterest1);
-      displayAccountInformation(match.order1.accountId);
-      console.log('openInterest2:', openInterest2);
-      displayAccountInformation(match.order2.accountId);
-      console.log('match:', match); 
-    });
-  });*/
-});
-
-// This hands the logging of matched order to the child thread
-events.on('matched', function(match){
-  child.stdin.write('\n'); 
-  child.stdin.write(JSON.stringify(match)); 
-  child.stdin.write('\n'); 
-});
-
-events.on('matched', function(match){
-  matchedTrades++;
-});
-
-events.on('matched', function(match){
-  updateAccountBalances(match);
-  /*console.log('--- postmatch');
-  displayAccountInformation(match.order1.accountId);
-  displayAccountInformation(match.order2.accountId);
-  auditTotals();
-  auditOrdersToReservedBalances(match.order1.accountId);
-  auditOrdersToReservedBalances(match.order2.accountId);*/
-});
-
-function updateAccountBalances(match){
-  var currency1Amount = match.amount;
-  //console.log('currency1Amount:', currency1Amount);
-  var currency2Amount = match.order1.price * currency1Amount;
-  //console.log('currency2Amount:', currency2Amount);
-  if(match.order1.type == 'ask'){
-    accountList[match.order1.accountId].currency1 -= currency1Amount;
-    accountList[match.order1.accountId].reservedCurrency1 -= currency1Amount;
-    accountList[match.order1.accountId].currency2 += currency2Amount;
-
-    accountList[match.order2.accountId].currency1 += currency1Amount;
-    accountList[match.order2.accountId].currency2 -= currency2Amount;
-    accountList[match.order2.accountId].reservedCurrency2 -= (match.order2.price*currency1Amount);
-  } else if(match.order1.type == 'bid') { 
-    accountList[match.order1.accountId].currency1 += currency1Amount;
-    accountList[match.order1.accountId].currency2 -= currency2Amount;
-    accountList[match.order1.accountId].reservedCurrency2 -= (match.order2.price*currency1Amount);
-
-    accountList[match.order2.accountId].currency1 -= currency1Amount;
-    accountList[match.order2.accountId].reservedCurrency1 -= currency1Amount;
-    accountList[match.order2.accountId].currency2 += currency2Amount;
-  } 
-}
-
-events.on('matched', function(match){
-  lastTraded = {
-    price: match.order1.price,
-    amount: match.amount
-  };
-});
-
-function auditTotals(){
-  var totalCurrency1 = 0;
-  var totalCurrency2 = 0;
-  for(var i in accountList){
-    var account = accountList[i];
-    totalCurrency1 += account.currency1;
-    totalCurrency2 += account.currency2; 
-  }  
-
-  if(Math.abs(totalCurrency1 - 500) > 1 || Math.abs(totalCurrency2 - 500) > 1){
-    console.log('ERROR: Audited totals: '+'\nBTC: '+totalCurrency1+'\nUSD: '+totalCurrency2);
-  }
-}
-
-var accountList = [];
-var accountBalance = 100;
-
-function createAccounts(){
-  for(var i = 0; i < 5; i++){
-    accountList.push({
-      currency1: accountBalance,
-      reservedCurrency1: 0,
-      currency2: accountBalance,
-      reservedCurrency2: 0,
-      id: i 
-    });
-  }
-}
-
-function getAccountOrders(accountId, cb){
-  async.filter(bids.concat(asks), function(order, callback){
-    callback(null, order.accountId == accountId);
-  }, function(err, accountOrders){
-    cb(accountOrders);
-  }); 
-}
-
-function calculateOpenInterest(accountId, cb){
-  var account = accountList[accountId];
-  // Get open orders for account
-  getAccountOrders(account.id, function(accountOrders){ 
-    var totalCurrency1 = 0;
-    var totalCurrency2 = 0;    
-    for(var i in accountOrders){
-      var accountOrder = accountOrders[i];
-      if(accountOrder.type == 'ask'){
-        totalCurrency1 += accountOrder.amount;
-      } else if(accountOrder.type == 'bid'){
-        totalCurrency2 += (accountOrder.amount * accountOrder.price);
-      }
-    }
-    cb({
-      totalCurrency1: totalCurrency1, 
-      totalCurrency2: totalCurrency2
-    });
-  });
-}
-
-function auditOrdersToReservedBalances(accountId){
-  calculateOpenInterest(accountId, function(openInterest){
-    var totalCurrency1 = openInterest.totalCurrency1;
-    var totalCurrency2 = openInterest.totalCurrency2;
-    var account = accountList[accountId];
-    var reservedCurrency1 = account.reservedCurrency1;
-    var reservedCurrency2 = account.reservedCurrency2;
-
-    if(totalCurrency1 != reservedCurrency1 || totalCurrency2 != reservedCurrency2){
-      console.log('ERROR: Mismatch between open orders and reserved balance for account:', accountId);
-      console.log('totalCurrency1:', totalCurrency1);
-      console.log('account.reservedCurrency1:', reservedCurrency1);
-      console.log('totalCurrency2:', totalCurrency2);
-      console.log('account.reservedCurrency2:', reservedCurrency2);
-    } else {
-      console.log('Audit passed');
-    }
-  });
-}
-
-events.on('displayAccounts', function(){
-  console.log('---');
-  for(var i in accountList){
-    displayAccountInformation(i);
-  }
-});
-
-function displayAccountInformation(accountId){
-  var account = accountList[accountId];
-  console.log('accountNr:', accountId);
-  console.log('Balances:');
-  console.log('BTC: '+account.currency1+' | USD: '+account.currency2);
-  console.log('Reserved balances:');
-  console.log('BTC: '+account.reservedCurrency1+' | USD: '+account.reservedCurrency2);
 }
 
 // Asks: willing to sell currency1 for currency2
@@ -467,7 +478,7 @@ function displayAccountInformation(accountId){
 // Assume just one currency pair right now, BTCUSD
 function createOrder(cb){
   // Choose an account
-  var accountNr = Math.floor((Math.random() * (accountList.length-1)) + 1);
+  var accountNr = Math.floor((Math.random() * (accountList.length)) + 0);
   var account = accountList[accountNr];
 
   var orderTimestamp = new Date().getTime();  
@@ -503,7 +514,7 @@ function createNewOrders(){
         }
       });
     }
-  }, 100);  
+  }, 1);  
 }
 
 function createCancelOrders(){
@@ -525,16 +536,19 @@ function run(){
     events.emit('displayStats');
   }, 1000);
 
-  /*setInterval(function(){
-    events.emit('displayAccounts');
-  }, 1000);*/
+  setInterval(function(){
+    console.log('---');
+    for(var i in accountList){
+      displayAccountInformation(i);
+    }
+  }, 1000);
 
   if(startTime == 0){
     startTime = new Date().getTime();
   }
   createAccounts();
   createNewOrders();
-  createCancelOrders();
+  //createCancelOrders();
 }
 
 run();
