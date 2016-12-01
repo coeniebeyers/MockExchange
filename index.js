@@ -11,7 +11,7 @@ var config = {
     name: 'USD',
     decimals: 2
   }
-}
+};
 
 child.stderr.on('data', function(data){
   console.log('err data:');
@@ -323,21 +323,46 @@ function updateAccountBalances(match){
   var currency2Amount = match.order1.price * currency1Amount;
   //console.log('currency2Amount:', currency2Amount);
   if(match.order1.type == 'ask'){
-    accountList[match.order1.accountId].currency1 -= currency1Amount;
-    accountList[match.order1.accountId].reservedCurrency1 -= currency1Amount;
-    accountList[match.order1.accountId].currency2 += currency2Amount;
+    var account1 = accountList[match.order1.accountId];
+    account1.currency1 -= currency1Amount;
+    account1.currency1 = Number((account1.currency1).toFixed(config.currency1.decimals));
+    account1.reservedCurrency1 -= currency1Amount;
+    account1.reservedCurrency1 = 
+      Number((account1.reservedCurrency1).toFixed(config.currency1.decimals));
+    account1.currency2 += currency2Amount;
+    account1.currency2 = Number((account1.currency2).toFixed(config.currency2.decimals));
 
-    accountList[match.order2.accountId].currency1 += currency1Amount;
-    accountList[match.order2.accountId].currency2 -= currency2Amount;
-    accountList[match.order2.accountId].reservedCurrency2 -= (match.order2.price*currency1Amount);
+    var account2 = accountList[match.order2.accountId];
+    account2.currency1 += currency1Amount;
+    account2.currency1 = Number((account2.currency1).toFixed(config.currency1.decimals));
+    account2.currency2 -= currency2Amount;
+    account2.currency2 = Number((account2.currency2).toFixed(config.currency2.decimals));
+    account2.reservedCurrency2 -= (match.order2.price*currency1Amount);
+    account2.reservedCurrency2 = 
+      Number((account2.reservedCurrency2).toFixed(config.currency2.decimals));
+
   } else if(match.order1.type == 'bid') { 
-    accountList[match.order1.accountId].currency1 += currency1Amount;
-    accountList[match.order1.accountId].currency2 -= currency2Amount;
-    accountList[match.order1.accountId].reservedCurrency2 -= currency2Amount;
+    var account1 = accountList[match.order1.accountId];
+    account1.currency1 += currency1Amount;
+    account1.currency1 = Number((account1.currency1).toFixed(config.currency1.decimals));
 
-    accountList[match.order2.accountId].currency1 -= currency1Amount;
-    accountList[match.order2.accountId].reservedCurrency1 -= currency1Amount;
-    accountList[match.order2.accountId].currency2 += currency2Amount;
+    account1.currency2 -= currency2Amount;
+    account1.currency2 = Number((account1.currency2).toFixed(config.currency2.decimals));
+
+    account1.reservedCurrency2 -= currency2Amount;
+    account1.reservedCurrency2 = 
+      Number((account1.reservedCurrency2).toFixed(config.currency2.decimals));
+
+    var account2 = accountList[match.order2.accountId];
+    account2.currency1 -= currency1Amount;
+    account2.currency1 = Number((account2.currency1).toFixed(config.currency1.decimals));
+
+    account2.reservedCurrency1 -= currency1Amount;
+    account2.reservedCurrency1 = 
+      Number((account2.reservedCurrency1).toFixed(config.currency1.decimals));
+    
+    account2.currency2 += currency2Amount;
+    account2.currency2 = Number((account2.currency2).toFixed(config.currency2.decimals));
   } 
 }
 
@@ -357,8 +382,8 @@ function auditTotals(){
     totalCurrency2 += account.currency2; 
   }  
 
-  if(Math.abs(totalCurrency1 - 100*accountList.length) > 1 
-      || Math.abs(totalCurrency2 - 100*accountList.length) > 1){
+  if(Math.abs(totalCurrency1 - 100*accountList.length) > 0 
+      || Math.abs(totalCurrency2 - 100*accountList.length) > 0){
     console.log('ERROR: Audited totals: '+'\nBTC: '+totalCurrency1+'\nUSD: '+totalCurrency2);
   }
 }
@@ -525,7 +550,7 @@ function createNewOrders(){
         }
       });
     }
-  }, 1);  
+  }, 1000);  
 }
 
 function createCancelOrders(){
