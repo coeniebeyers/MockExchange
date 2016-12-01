@@ -1,4 +1,8 @@
 import {Directive, ElementRef, Input, OnInit} from '@angular/core';
+import {Http, Response, Headers, RequestOptions } from "@angular/http";
+import {Observable} from 'rxjs/Rx';
+import 'rxjs/add/operator/map';
+
 declare var google:any;
 declare var googleLoaded:any;
 @Directive({
@@ -11,17 +15,19 @@ export class GoogleChartComponent implements OnInit {
   @Input('chartOptions') public chartOptions: Object;
   @Input('chartData') public chartData: Object;
 
-  constructor(public element: ElementRef) {
+  public candlestickDataRefresh = [['Date', 'Trades', 'Open', 'Close', 'High']]; 
+
+  constructor(
+    public element: ElementRef,
+    private http: Http) {
     this._element = this.element.nativeElement;
   }
 
   ngOnInit() {
-    setTimeout(() =>{
+    setInterval(() =>{
       google.charts.load('current', {'packages':['corechart']});
-        setTimeout(() =>{
-          this.drawGraph(this.chartOptions,this.chartType,this.chartData,this._element)
-        },500);
-      },500
+      this.fetchData();
+      },1000
     );
   }
 
@@ -38,5 +44,27 @@ export class GoogleChartComponent implements OnInit {
       console.log('elementtId:', ele.id);
       wrapper.draw();
     }
+  }
+
+  fetchData(){
+    let headers = new Headers({ 'Content-Type': 'application/json' });
+    let options = new RequestOptions({ headers: headers });
+    this.http.get('http://localhost:3032/getCandleSticks', options)
+      .map(response => response.json())
+			.subscribe(
+				data => {
+          if(data["err"] && data["err"] != ''){
+            console.log('An error occured: ', data["err"]);
+          } else {
+            this.candlestickDataRefresh = [['Date', 'Trades', 'Open', 'Close', 'High']]; 
+            console.log('data:', data);
+            for(var index in data){
+              this.candlestickDataRefresh.push([data[index].endOfCurrentCandleTime, data[index].low, data[index].open, data[index].close, data[index].high]);
+            }
+            this.drawGraph(this.chartOptions,this.chartType,this.candlestickDataRefresh,this._element)
+          }
+        },
+				err => { console.log('error:', err); }
+			);
   }
 }

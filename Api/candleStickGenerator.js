@@ -22,8 +22,16 @@ function getCandleStickData(interval, cb){
     default       :  noSecondsToQuery = noGraphIntervals * 60;  break;
   }
 
-  var endTime = Date.now();
+  var endTime = new Date();
+  endTime.setSeconds(0, 0);
+  endTime = endTime.getTime();
+  
   var startTime = subtractSeconds(endTime, noSecondsToQuery);
+  endTime = Date.now();
+
+
+  console.log('endTime:', endTime);
+  console.log('startTime:', startTime);
 
 	orderLog.FetchLog(startTime, endTime, function(docs){
     for(index in docs){
