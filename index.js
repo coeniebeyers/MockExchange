@@ -5,11 +5,13 @@ var child = spawn('node', ['orderLog.js']);
 var config = {
   currency1: {
     name: 'BTC',
-    decimals: 8
+    decimals: 10,
+    constant: Math.pow(10, 10)
   },
   currency2: {
     name: 'USD',
-    decimals: 2
+    decimals: 4,
+    constant: Math.pow(10, 4)
   }
 };
 
@@ -50,21 +52,32 @@ events.on('displayStats', function(){
   console.log('last trade:', lastTraded); 
 });
 
+function round(number, constant){
+  return Math.round(number*constant)/constant;
+  //return number;
+}
+
 // Update amounts reserved 
 events.on('newOrder', function(order){
   var account = accountList[order.accountId];
   if(order.type == 'ask'){
     var amount = order.amount;
     account.reservedCurrency1 += amount;
+    account.reservedCurrency1 = round(account.reservedCurrency1, config.currency1.constant);
   } else if(order.type == 'cancelask'){
     var amount = order.amount;
     account.reservedCurrency1 -= amount;
+    account.reservedCurrency1 = round(account.reservedCurrency1, config.currency1.constant);
   } else if(order.type == 'bid'){
     var amount = order.amount * order.price;
     account.reservedCurrency2 += amount;
+    account.reservedCurrency2 = round(account.reservedCurrency2, config.currency2.constant);
   } else if(order.type == 'cancelbid'){
+    /*console.log('newOrder:', order);
+    console.log('for account:', account);*/
     var amount = order.amount * order.price;
     account.reservedCurrency2 -= amount;
+    account.reservedCurrency2 = round(account.reservedCurrency2, config.currency2.constant);
   }
 });
 
@@ -80,6 +93,7 @@ events.on('newOrder', function(order){
 
 function updateOrderBook(order){
   if(order.type == 'bid'){
+    order.amount = round(order.amount, config.currency1.constant);
     // No matching asks
     if((asks.length == 0)||(asks.length > 0 && order.price < asks[0].price)){ 
       if(bids.length == 0 || order.price > bids[0].price){ // Update first element in list
@@ -97,6 +111,7 @@ function updateOrderBook(order){
         };
         events.emit('matched', match);
         asks[0].amount -= order.amount;
+        asks[0].amount = round(asks[0].amount, config.currency1.constant);
         events.emit('matchExecuted', match);
         events.emit('orderExecuted', order);
       } else if (asks[0].amount == order.amount) { 
@@ -106,7 +121,6 @@ function updateOrderBook(order){
           amount: order.amount
         };
         events.emit('matched', match);
-        asks[0].amount -= order.amount;
         asks.splice(0, 1);
         events.emit('matchExecuted', match);
         events.emit('orderExecuted', order);
@@ -119,6 +133,7 @@ function updateOrderBook(order){
         events.emit('matched', match);
         var newOrder = Object.assign({}, order); 
         newOrder.amount -= asks[0].amount;
+        newOrder.amount = round(newOrder.amount, config.currency1.constant);
         newOrder.parentOrder = order;
         asks.splice(0, 1);
         events.emit('matchExecuted', match);
@@ -126,6 +141,7 @@ function updateOrderBook(order){
       }
     }
   } else if(order.type == 'ask'){ // order.type ask
+    order.amount = round(order.amount, config.currency1.constant);
     // No matching bids
     if((bids.length == 0)||(bids.length > 0 && order.price > bids[0].price)){
       if(asks.length == 0 || order.price < asks[0].price){ // Update first element in list
@@ -143,6 +159,7 @@ function updateOrderBook(order){
         };
         events.emit('matched', match);
         bids[0].amount -= order.amount;
+        bids[0].amount = round(bids[0].amount, config.currency1.constant);
         events.emit('matchExecuted', match);
         events.emit('orderExecuted', order);
       } else if (bids[0].amount == order.amount){
@@ -152,7 +169,6 @@ function updateOrderBook(order){
           amount: order.amount
         };
         events.emit('matched', match);
-        bids[0].amount -= order.amount;
         bids.splice(0, 1);
         events.emit('matchExecuted', match);
         events.emit('orderExecuted', order);
@@ -165,6 +181,7 @@ function updateOrderBook(order){
         events.emit('matched', match);
         var newOrder = Object.assign({}, order); 
         newOrder.amount -= bids[0].amount;
+        newOrder.amount = round(newOrder.amount, config.currency1.constant);
         newOrder.parentOrder = order;
         bids.splice(0, 1);
         events.emit('matchExecuted', match);
@@ -173,12 +190,12 @@ function updateOrderBook(order){
     }
   } else if(order.type == 'cancelbid'){
     var i = getIndex(0, bids.length-1, bids, order.orderToCancel, 'desc');
-    if(i){
+    if(i !== null){
       bids.splice(i, 1);
     }
   } else if(order.type == 'cancelask'){
     var i = getIndex(0, asks.length-1, asks, order.orderToCancel, 'asc');
-    if(i){
+    if(i !== null){
       asks.splice(i, 1);
     }
   }
@@ -283,22 +300,13 @@ function displayOrderBook(){
 
 events.on('matched', function(match){
   auditTotals();
-  /*console.log('--- matched');
-  var openInterest1 = calculateOpenInterest(match.order1.accountId);
-  console.log('openInterest1:', openInterest1);
-  displayAccountInformation(match.order1.accountId);
-
-  var openInterest2 = calculateOpenInterest(match.order2.accountId);
-  console.log('openInterest2:', openInterest2);
-  displayAccountInformation(match.order2.accountId);
-  console.log('match:', match); */
 });
 
 // This hands the logging of matched order to the child thread
 events.on('matchExecuted', function(match){
-  child.stdin.write('\n'); 
+  /*child.stdin.write('\n'); 
   child.stdin.write(JSON.stringify(match)); 
-  child.stdin.write('\n'); 
+  child.stdin.write('\n'); */
 });
 
 events.on('matchExecuted', function(match){
@@ -308,9 +316,6 @@ events.on('matchExecuted', function(match){
 events.on('matchExecuted', function(match){
   updateAccountBalances(match);
   auditTotals();
-  /*console.log('--- matchExecuted');
-  displayAccountInformation(match.order1.accountId);
-  displayAccountInformation(match.order2.accountId);*/
 });
 
 events.on('orderExecuted', function(order){
@@ -325,44 +330,39 @@ function updateAccountBalances(match){
   if(match.order1.type == 'ask'){
     var account1 = accountList[match.order1.accountId];
     account1.currency1 -= currency1Amount;
-    account1.currency1 = Number((account1.currency1).toFixed(config.currency1.decimals));
+    account1.currency1 = round(account1.currency1, config.currency1.constant);
     account1.reservedCurrency1 -= currency1Amount;
-    account1.reservedCurrency1 = 
-      Number((account1.reservedCurrency1).toFixed(config.currency1.decimals));
+    account1.reservedCurrency1 = round(account1.reservedCurrency1, config.currency1.constant);
     account1.currency2 += currency2Amount;
-    account1.currency2 = Number((account1.currency2).toFixed(config.currency2.decimals));
+    account1.currency2 = round(account1.currency2, config.currency2.constant);
 
     var account2 = accountList[match.order2.accountId];
     account2.currency1 += currency1Amount;
-    account2.currency1 = Number((account2.currency1).toFixed(config.currency1.decimals));
+    account2.currency1 = round(account2.currency1, config.currency1.constant);
     account2.currency2 -= currency2Amount;
-    account2.currency2 = Number((account2.currency2).toFixed(config.currency2.decimals));
-    account2.reservedCurrency2 -= (match.order2.price*currency1Amount);
-    account2.reservedCurrency2 = 
-      Number((account2.reservedCurrency2).toFixed(config.currency2.decimals));
-
+    account2.currency2 = round(account2.currency2, config.currency2.constant);
+    account2.reservedCurrency2 -= match.order2.price*currency1Amount;
+    account2.reservedCurrency2 = round(account2.reservedCurrency2, config.currency2.constant);
   } else if(match.order1.type == 'bid') { 
     var account1 = accountList[match.order1.accountId];
     account1.currency1 += currency1Amount;
-    account1.currency1 = Number((account1.currency1).toFixed(config.currency1.decimals));
+    account1.currency1 = round(account1.currency1, config.currency1.constant);
 
     account1.currency2 -= currency2Amount;
-    account1.currency2 = Number((account1.currency2).toFixed(config.currency2.decimals));
+    account1.currency2 = round(account1.currency2, config.currency2.constant);
 
     account1.reservedCurrency2 -= currency2Amount;
-    account1.reservedCurrency2 = 
-      Number((account1.reservedCurrency2).toFixed(config.currency2.decimals));
+    account1.reservedCurrency2 = round(account1.reservedCurrency2, config.currency2.constant);
 
     var account2 = accountList[match.order2.accountId];
     account2.currency1 -= currency1Amount;
-    account2.currency1 = Number((account2.currency1).toFixed(config.currency1.decimals));
+    account2.currency1 = round(account2.currency1, config.currency1.constant);
 
     account2.reservedCurrency1 -= currency1Amount;
-    account2.reservedCurrency1 = 
-      Number((account2.reservedCurrency1).toFixed(config.currency1.decimals));
+    account2.reservedCurrency1 = round(account2.reservedCurrency1, config.currency1.constant);
     
     account2.currency2 += currency2Amount;
-    account2.currency2 = Number((account2.currency2).toFixed(config.currency2.decimals));
+    account2.currency2 = round(account2.currency2, config.currency2.constant);
   } 
 }
 
@@ -379,7 +379,9 @@ function auditTotals(){
   for(var i in accountList){
     var account = accountList[i];
     totalCurrency1 += account.currency1;
+    totalCurrency1 = round(totalCurrency1, config.currency1.constant);
     totalCurrency2 += account.currency2; 
+    totalCurrency2 = round(totalCurrency2, config.currency2.constant);
   }  
 
   if(Math.abs(totalCurrency1 - 100*accountList.length) > 0 
@@ -392,7 +394,7 @@ var accountList = [];
 var accountBalance = 100;
 
 function createAccounts(){
-  for(var i = 0; i < 5; i++){
+  for(var i = 0; i < 100; i++){
     accountList.push({
       currency1: accountBalance,
       reservedCurrency1: 0,
@@ -403,56 +405,64 @@ function createAccounts(){
   }
 }
 
-function getCopyOfAccountOrders(accountId, cb){
+function calculateOpenInterest(accountId, cb){
+  var account = accountList[accountId];
   var accountOrders = [];
+  // Get open orders for account
   var bidsAndAsks = bids.concat(asks);
+  var totalCurrency1 = 0;
+  var totalCurrency2 = 0;    
   for(var i in bidsAndAsks){
-    if(bidsAndAsks[i].accountId == accountId){
-      accountOrders.push(bidsAndAsks[i]);
+    var order = bidsAndAsks[i];
+    if(order.type == 'ask'){
+      if(accountOrders[order.accountId] == undefined){
+        accountOrders[order.accountId] = 
+          {
+            currency1: order.amount,
+            currency2: 0
+          };
+      } else {
+        accountOrders[order.accountId].currency1 += order.amount;
+      }
+      accountOrders[order.accountId].currency1 = 
+        round(accountOrders[order.accountId].currency1, config.currency1.constant);
+    } else if(order.type == 'bid'){
+      if(accountOrders[order.accountId] == undefined){
+        var currency2 = order.amount * order.price;
+        accountOrders[order.accountId] = 
+          {
+            currency1: 0,
+            currency2: currency2
+          };
+      } else {
+        accountOrders[order.accountId].currency2 += order.amount * order.price;
+      }
+      accountOrders[order.accountId].currency2 = 
+        round(accountOrders[order.accountId].currency2, config.currency2.constant);
     }
   }
   return accountOrders;
 }
 
-function calculateOpenInterest(accountId, cb){
-  var account = accountList[accountId];
-  // Get open orders for account
-  accountOrders = getCopyOfAccountOrders(account.id);
-  var totalCurrency1 = 0;
-  var totalCurrency2 = 0;    
-  for(var i in accountOrders){
-    var accountOrder = accountOrders[i];
-    if(accountOrder.type == 'ask'){
-      totalCurrency1 += accountOrder.amount;
-    } else if(accountOrder.type == 'bid'){
-      totalCurrency2 += (accountOrder.amount * accountOrder.price);
-    }
-  }
-  var obj = {
-    totalCurrency1: totalCurrency1, 
-    totalCurrency2: totalCurrency2
-  };
-  return obj;
-}
-
 function auditOrdersToReservedBalances(){
+  var accountOrders = calculateOpenInterest();
   for(var accountId in accountList){
-    var openInterest = calculateOpenInterest(accountId)
-    var totalCurrency1 = openInterest.totalCurrency1;
-    var totalCurrency2 = openInterest.totalCurrency2;
-    var account = accountList[accountId];
-    var reservedCurrency1 = account.reservedCurrency1;
-    var reservedCurrency2 = account.reservedCurrency2;
+    if(accountOrders[accountId]){
+      var totalCurrency1 = accountOrders[accountId].currency1;
+      var totalCurrency2 = accountOrders[accountId].currency2;
+      var account = accountList[accountId];
+      var reservedCurrency1 = account.reservedCurrency1;
+      var reservedCurrency2 = account.reservedCurrency2;
 
-    if(Math.abs(totalCurrency1-reservedCurrency1) > 0 
-        || Math.abs(totalCurrency2-reservedCurrency2) > 0){
-      console.log('ERROR: Mismatch between open orders and reserved balance for account:', accountId);
-      console.log('totalCurrency1:', totalCurrency1);
-      console.log('account.reservedCurrency1:', reservedCurrency1);
-      console.log('totalCurrency2:', totalCurrency2);
-      console.log('account.reservedCurrency2:', reservedCurrency2);
-    } else {
-      //console.log('Audit passed');
+      if(Math.abs(totalCurrency1-reservedCurrency1) > 0 
+          || Math.abs(totalCurrency2-reservedCurrency2) > 0){
+        console.log('ERROR: Mismatch between open orders and reserved balance for account:', 
+          accountId);
+        console.log('totalCurrency1:', totalCurrency1);
+        console.log('account.reservedCurrency1:', reservedCurrency1);
+        console.log('totalCurrency2:', totalCurrency2);
+        console.log('account.reservedCurrency2:', reservedCurrency2);
+      }
     }
   }
 }
@@ -496,17 +506,19 @@ function createCancelOrder(cb){
   var orderId = uuid.v1();
   var bidOrAsk = getBidOrAsk();
   var orderToCancel = getRandomOrder(bidOrAsk);
-  bidOrAsk = 'cancel' + bidOrAsk;
-  var order = {
-    timestamp: orderTimestamp,
-    id: orderId,
-    accountId: orderToCancel.accountId,
-    type: bidOrAsk,
-    price: orderToCancel.price,
-    amount: orderToCancel.amount,
-    orderToCancel: orderToCancel,
-  };
-  cb(order);
+  if(orderToCancel !== undefined){
+    bidOrAsk = 'cancel' + bidOrAsk;
+    var order = {
+      timestamp: orderTimestamp,
+      id: orderId,
+      accountId: orderToCancel.accountId,
+      type: bidOrAsk,
+      price: orderToCancel.price,
+      amount: orderToCancel.amount,
+      orderToCancel: orderToCancel,
+    };
+    cb(order);
+  }
 }
 
 // Asks: willing to sell currency1 for currency2
@@ -542,7 +554,7 @@ function createOrder(cb){
 
 function createNewOrders(){
   setInterval(function(){
-    for(var i = 0; i < 1; i++){
+    for(var i = 0; i < 2000; i++){
       createOrder(function(order){
         if(order){
           order.orderEmitTime = new Date().getTime(),
@@ -550,20 +562,20 @@ function createNewOrders(){
         }
       });
     }
-  }, 1000);  
+  }, 1);  
 }
 
 function createCancelOrders(){
   setInterval(function(){
     if(bids.length > 1 && asks.length > 1){
-      for(var i = 0; i < 1; i++){
+      for(var i = 0; i < 500; i++){
         createCancelOrder(function(order){
           order.orderEmitTime = new Date().getTime(),
           events.emit('newOrder', order);
         });
       }
     }
-  }, 1000);  
+  }, 1);  
 }
 
 function run(){
@@ -572,20 +584,26 @@ function run(){
     events.emit('displayStats');
   }, 1000);
 
-  setInterval(function(){
+  /*setInterval(function(){
     console.log('---');
     for(var i in accountList){
       displayAccountInformation(i);
     }
-  }, 1000);
+  }, 1000);*/
 
   if(startTime == 0){
     startTime = new Date().getTime();
   }
   createAccounts();
   createNewOrders();
-  //createCancelOrders();
+  createCancelOrders();
 }
 
 run();
 
+function sumbitNewOrderForMatching(newOrderFromUI){
+  events.emit('newOrder', newOrderFromUI);
+}
+
+
+exports.SumbitNewOrderForMatching = sumbitNewOrderForMatching;
