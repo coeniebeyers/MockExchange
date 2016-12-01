@@ -26,11 +26,12 @@ export class GoogleChartComponent implements OnInit {
   ngOnInit() {
     google.charts.load('current', {'packages':['corechart']});
     this.fetchData();
+/*
     setInterval(() =>{
-      google.charts.load('current', {'packages':['corechart']});
       this.fetchData();
       },2500
     );
+*/
   }
 
   drawGraph (chartOptions,chartType,chartData,ele) {
@@ -48,6 +49,11 @@ export class GoogleChartComponent implements OnInit {
     }
   }
 
+  /**
+   This is definitely not in the right place
+   Need to figure out where to put it
+   There is a mix of concerns here
+   **/
   fetchData(){
     let headers = new Headers({ 'Content-Type': 'application/json' });
     let options = new RequestOptions({ headers: headers });

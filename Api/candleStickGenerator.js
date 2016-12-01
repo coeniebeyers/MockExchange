@@ -76,7 +76,7 @@ function getOHLCCandles(startTime, endTime, tradeList, candleSize, cb){
  for(var i = 0; i < numberOfCandles; i++){
    endOfCurrentCandle = startTime + (i + 1)*candleSize;
    var d = new Date(endOfCurrentCandle);
-   var endOfCurrentCandleTime = d.getFullYear()  + '/' + (d.getMonth()+1) + '/' + d.getDate() + ' ' + d.getHours() + ':' + d.getMinutes() + ':' + d.getSeconds() ;
+   var endOfCurrentCandleTime = (d.getHours()<10?'0':'') + d.getHours() + ':' + (d.getMinutes()<10?'0':'') + d.getMinutes();
    if(tradeList[tradeListIndex].timestamp > endOfCurrentCandle){
      var emptyCandleInfo = {
        open: 0,

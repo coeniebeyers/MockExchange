@@ -1,0 +1,7 @@
+h1 { color: white; background-color: #222222; font-family: 'Avenir Next LT W01 Bold', Helvetica, Arial, sans-serif; font-size: 36px; font-weight: 400; line-height: 64px; margin: 0 0 12px; text-align: center; }
+
+#candlestick_chart {
+	max-width: 100%; 
+  min-height: 450px;
+}
+

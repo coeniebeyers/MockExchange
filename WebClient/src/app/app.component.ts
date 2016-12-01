@@ -18,9 +18,13 @@ export class AppComponent {
       legend: 'none',
       height: 600,
       vAxis: { 
-       title :'price (ZAR)',
-       gridlines: { count: 7 } 
+       title :'price (ZAR)'
       },
+			hAxis: {
+        title: "Time",
+        slantedText: true,  /* Enable slantedText for horizontal axis */
+        slantedTextAngle: 90
+      }
     };
 
   constructor(
@@ -55,6 +59,6 @@ export class AppComponent {
 
   }
 
-  title = 'app works!';
+  title = 'Found<sup>e</sup>ry Crypto Exchange';
 }
 
