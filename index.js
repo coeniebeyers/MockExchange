@@ -73,8 +73,6 @@ events.on('newOrder', function(order){
     account.reservedCurrency2 += amount;
     account.reservedCurrency2 = round(account.reservedCurrency2, config.currency2.constant);
   } else if(order.type == 'cancelbid'){
-    /*console.log('newOrder:', order);
-    console.log('for account:', account);*/
     var amount = order.amount * order.price;
     account.reservedCurrency2 -= amount;
     account.reservedCurrency2 = round(account.reservedCurrency2, config.currency2.constant);
@@ -299,14 +297,14 @@ function displayOrderBook(){
 }
 
 events.on('matched', function(match){
-  auditTotals();
+  //auditTotals();
 });
 
 // This hands the logging of matched order to the child thread
 events.on('matchExecuted', function(match){
-  /*child.stdin.write('\n'); 
+  child.stdin.write('\n'); 
   child.stdin.write(JSON.stringify(match)); 
-  child.stdin.write('\n'); */
+  child.stdin.write('\n');
 });
 
 events.on('matchExecuted', function(match){
@@ -376,11 +374,10 @@ events.on('matchExecuted', function(match){
 function auditTotals(){
   var totalCurrency1 = 0;
   var totalCurrency2 = 0;
-  for(var i in accountList){
-    var account = accountList[i];
-    totalCurrency1 += account.currency1;
+  for(var i=accountList.length; i--;){
+    totalCurrency1 += accountList[i].currency1;
     totalCurrency1 = round(totalCurrency1, config.currency1.constant);
-    totalCurrency2 += account.currency2; 
+    totalCurrency2 += accountList[i].currency2; 
     totalCurrency2 = round(totalCurrency2, config.currency2.constant);
   }  
 
@@ -394,7 +391,7 @@ var accountList = [];
 var accountBalance = 100;
 
 function createAccounts(){
-  for(var i = 0; i < 100; i++){
+  for(var i = 0; i < 1000; i++){
     accountList.push({
       currency1: accountBalance,
       reservedCurrency1: 0,
@@ -405,14 +402,13 @@ function createAccounts(){
   }
 }
 
-function calculateOpenInterest(accountId, cb){
-  var account = accountList[accountId];
+function calculateOpenInterest(){
   var accountOrders = [];
   // Get open orders for account
   var bidsAndAsks = bids.concat(asks);
   var totalCurrency1 = 0;
   var totalCurrency2 = 0;    
-  for(var i in bidsAndAsks){
+  for(var i=bidsAndAsks.length; i--;){
     var order = bidsAndAsks[i];
     if(order.type == 'ask'){
       if(accountOrders[order.accountId] == undefined){
@@ -446,8 +442,8 @@ function calculateOpenInterest(accountId, cb){
 
 function auditOrdersToReservedBalances(){
   var accountOrders = calculateOpenInterest();
-  for(var accountId in accountList){
-    if(accountOrders[accountId]){
+  for(var accountId = accountList.length; accountId--;){
+    if(accountOrders[accountId] !== undefined){
       var totalCurrency1 = accountOrders[accountId].currency1;
       var totalCurrency2 = accountOrders[accountId].currency2;
       var account = accountList[accountId];
@@ -554,7 +550,7 @@ function createOrder(cb){
 
 function createNewOrders(){
   setInterval(function(){
-    for(var i = 0; i < 2000; i++){
+    for(var i = 1000; i--;){
       createOrder(function(order){
         if(order){
           order.orderEmitTime = new Date().getTime(),
@@ -568,7 +564,7 @@ function createNewOrders(){
 function createCancelOrders(){
   setInterval(function(){
     if(bids.length > 1 && asks.length > 1){
-      for(var i = 0; i < 500; i++){
+      for(var i = Math.round(Math.random()*500); i--;){
         createCancelOrder(function(order){
           order.orderEmitTime = new Date().getTime(),
           events.emit('newOrder', order);
