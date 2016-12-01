@@ -14,24 +14,37 @@ function getCandleStickData(interval, cb){
   var noSecondsToQuery = 0;
   var noGraphIntervals = 50;
   var trades = [];
-  switch(interval.toLowerCase()) {
-    case 'week'   :  noSecondsToQuery = noGraphIntervals * 3600 * 24 * 7;  break;
-    case 'day'    :  noSecondsToQuery = noGraphIntervals * 3600 * 24;  break;
-    case 'hour'   :  noSecondsToQuery = noGraphIntervals * 3600;  break;
-    case 'minute' :  noSecondsToQuery = noGraphIntervals * 60;  break;
-    default       :  noSecondsToQuery = noGraphIntervals * 60;  break;
-  }
-
   var endTime = new Date();
   endTime.setSeconds(0, 0);
+  var candleSize = 60000;
+
+  switch(interval.toLowerCase()) {
+    case 'day'    :  {
+      noSecondsToQuery = noGraphIntervals * 3600 * 24;  
+      endTime.setHours(0);
+      candleSize = candleSize * 60 * 24;
+      break;
+    }
+    case 'hour'   :  {
+      noSecondsToQuery = noGraphIntervals * 3600;  
+      endTime.setMinutes(0);
+      candleSize = candleSize * 60;
+      break;
+    }
+    case 'minute' :  {
+      noSecondsToQuery = noGraphIntervals * 60;  
+      break;
+    }
+    default       :  {
+      noSecondsToQuery = noGraphIntervals * 60;  
+      break;
+    }
+  }
+
   endTime = endTime.getTime();
   
   var startTime = subtractSeconds(endTime, noSecondsToQuery);
   endTime = Date.now();
-
-
-  console.log('endTime:', endTime);
-  console.log('startTime:', startTime);
 
 	orderLog.FetchLog(startTime, endTime, function(docs){
     for(index in docs){
@@ -42,7 +55,7 @@ function getCandleStickData(interval, cb){
 			});
 		}
 
-		getOHLCCandles(startTime, endTime, trades, 60000, function(candles){
+		getOHLCCandles(startTime, endTime, trades, candleSize, function(candles){
 			cb(candles);
 		});	
   });

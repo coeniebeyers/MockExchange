@@ -24,10 +24,12 @@ export class GoogleChartComponent implements OnInit {
   }
 
   ngOnInit() {
+    google.charts.load('current', {'packages':['corechart']});
+    this.fetchData();
     setInterval(() =>{
       google.charts.load('current', {'packages':['corechart']});
       this.fetchData();
-      },1000
+      },2500
     );
   }
 
