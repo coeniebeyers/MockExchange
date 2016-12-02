@@ -42,7 +42,6 @@ export class GoogleChartComponent implements OnInit {
         options:chartOptions || {},
         containerId: ele.id
       });
-      console.log('elementtId:', ele.id);
       wrapper.draw();
     }
   }
@@ -63,7 +62,6 @@ export class GoogleChartComponent implements OnInit {
             console.log('An error occured: ', data["err"]);
           } else {
             this.candlestickDataRefresh = [['Date', 'Trades', 'Open', 'Close', 'High']]; 
-            console.log('data:', data);
             for(var index in data){
               this.candlestickDataRefresh.push([data[index].endOfCurrentCandleTime, data[index].low, data[index].open, data[index].close, data[index].high]);
             }

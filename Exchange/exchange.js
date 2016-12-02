@@ -43,6 +43,15 @@ var bids = [];
 
 var lastTraded = null;
 
+function getBidsAndAsks(maxNo, cb){
+  var bidsAndAsks = {
+    bids : bids.slice(0,maxNo),
+    asks : asks.slice(0,maxNo)
+  };
+
+  cb(bidsAndAsks);
+}
+
 function getStats(cb){
   var stats = {
     avgOps : avgOps,
@@ -53,7 +62,6 @@ function getStats(cb){
   };
 
   cb(stats);
-
 }
 
 events.on('displayStats', function(){
@@ -561,7 +569,7 @@ function createOrder(cb){
 
 function createNewOrders(){
   setInterval(function(){
-    for(var i = 1000; i--;){
+    for(var i = 1; i--;){
       createOrder(function(order){
         if(order){
           order.orderEmitTime = new Date().getTime(),
@@ -569,20 +577,20 @@ function createNewOrders(){
         }
       });
     }
-  }, 1);  
+  }, 100);  
 }
 
 function createCancelOrders(){
   setInterval(function(){
     if(bids.length > 1 && asks.length > 1){
-      for(var i = Math.round(Math.random()*500); i--;){
+      for(var i = Math.round(Math.random()*10); i--;){
         createCancelOrder(function(order){
           order.orderEmitTime = new Date().getTime(),
           events.emit('newOrder', order);
         });
       }
     }
-  }, 1);  
+  }, 5000);  
 }
 
 function startExchangeSimulation(){
@@ -613,3 +621,4 @@ function sumbitNewOrderForMatching(newOrderFromUI){
 exports.SumbitNewOrderForMatching = sumbitNewOrderForMatching;
 exports.StartExchangeSimulation = startExchangeSimulation;
 exports.GetStats = getStats;
+exports.GetBidsAndAsks = getBidsAndAsks;

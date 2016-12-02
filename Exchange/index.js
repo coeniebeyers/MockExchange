@@ -17,6 +17,12 @@ app.use(bodyParser.urlencoded({
 
 app.use(bodyParser.json());
 
+app.get('/getBidsAndAsks', function (req, res) {
+	exchange.GetBidsAndAsks(12, function(bidsAndAsks){
+		res.json(bidsAndAsks);
+	});
+})
+
 app.get('/getStats', function (req, res) {
 	exchange.GetStats(function(stats){
 		res.json(stats);
