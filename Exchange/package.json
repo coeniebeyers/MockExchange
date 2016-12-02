@@ -1,0 +1,14 @@
+{
+  "name": "exchange",
+  "version": "1.0.0",
+  "description": "Starts the Exchange engine and serves up real time data as RESTful services",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "author": "",
+  "dependencies": {
+    "body-parser": "^1.15.2",
+    "express": "^4.14.0"
+  }
+}
