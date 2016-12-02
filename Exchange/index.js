@@ -1,6 +1,7 @@
 var express = require('express')
 var bodyParser = require('body-parser')
 var app = express()
+var exchange = require('../index.js')
 
 app.use(function (req, res, next) {
   res.setHeader('Access-Control-Allow-Origin', 'http://localhost:4200');
@@ -16,6 +17,14 @@ app.use(bodyParser.urlencoded({
 
 app.use(bodyParser.json());
 
+app.get('/getStats', function (req, res) {
+	exchange.GetStats(function(stats){
+		res.json(stats);
+	});
+})
+
 app.listen(3033, function () {
   console.log('Exchange engine is running on port 3033')
 })
+
+exchange.StartExchangeSimulation();

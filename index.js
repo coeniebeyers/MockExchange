@@ -1,6 +1,6 @@
 var async = require('async');
-var spawn = require('child_process').spawn;
-var child = spawn('node', ['orderLog.js']);  
+//var spawn = require('child_process').spawn;
+//var child = spawn('node', ['orderLog.js']);  
 
 var config = {
   currency1: {
@@ -14,7 +14,7 @@ var config = {
     constant: Math.pow(10, 4)
   }
 };
-
+/*
 child.stderr.on('data', function(data){
   console.log('err data:');
   console.log(data.toString());
@@ -25,8 +25,8 @@ child.stdout.setEncoding('utf8');
 child.stdout.on('data', function(data){
   console.log('Child response:', data);
 });
-
 var orderLog = require('./orderLog.js');
+*/
 var events = require('./eventEmitter.js');
 var uuid = require('uuid');
 
@@ -43,13 +43,24 @@ var bids = [];
 
 var lastTraded = null;
 
+function getStats(cb){
+  var stats = {
+    avgOps : avgOps,
+    matchedTrades : matchedTrades,
+    bidsLength : bids.length,
+    asksLength : asks.length,
+    lastTrade : lastTraded 
+  };
+
+  cb(stats);
+
+}
+
 events.on('displayStats', function(){
   console.log('---');
-  console.log('avgOps:', avgOps);
-  console.log('matched trades:', matchedTrades);
-  console.log('bids.length:', bids.length);
-  console.log('asks.length:', asks.length);
-  console.log('last trade:', lastTraded); 
+  getStats(function(stats){
+    console.log(stats);
+  });
 });
 
 function round(number, constant){
@@ -302,9 +313,11 @@ events.on('matched', function(match){
 
 // This hands the logging of matched order to the child thread
 events.on('matchExecuted', function(match){
+  /*
   child.stdin.write('\n'); 
   child.stdin.write(JSON.stringify(match)); 
   child.stdin.write('\n');
+  */
 });
 
 events.on('matchExecuted', function(match){
@@ -574,7 +587,7 @@ function createCancelOrders(){
   }, 1);  
 }
 
-function run(){
+function startExchangeSimulation(){
 
   setInterval(function(){
     events.emit('displayStats');
@@ -595,11 +608,10 @@ function run(){
   createCancelOrders();
 }
 
-run();
-
 function sumbitNewOrderForMatching(newOrderFromUI){
   events.emit('newOrder', newOrderFromUI);
 }
 
-
 exports.SumbitNewOrderForMatching = sumbitNewOrderForMatching;
+exports.StartExchangeSimulation = startExchangeSimulation;
+exports.GetStats = getStats;
