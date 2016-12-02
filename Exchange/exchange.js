@@ -1,6 +1,6 @@
 var async = require('async');
-//var spawn = require('child_process').spawn;
-//var child = spawn('node', ['orderLog.js']);  
+var spawn = require('child_process').spawn;
+var child = spawn('node', ['../DB/orderLog.js']);  
 
 var config = {
   currency1: {
@@ -14,7 +14,7 @@ var config = {
     constant: Math.pow(10, 4)
   }
 };
-/*
+
 child.stderr.on('data', function(data){
   console.log('err data:');
   console.log(data.toString());
@@ -25,8 +25,8 @@ child.stdout.setEncoding('utf8');
 child.stdout.on('data', function(data){
   console.log('Child response:', data);
 });
-var orderLog = require('./orderLog.js');
-*/
+var orderLog = require('../DB/orderLog.js');
+
 var events = require('./eventEmitter.js');
 var uuid = require('uuid');
 
@@ -313,11 +313,9 @@ events.on('matched', function(match){
 
 // This hands the logging of matched order to the child thread
 events.on('matchExecuted', function(match){
-  /*
   child.stdin.write('\n'); 
   child.stdin.write(JSON.stringify(match)); 
   child.stdin.write('\n');
-  */
 });
 
 events.on('matchExecuted', function(match){

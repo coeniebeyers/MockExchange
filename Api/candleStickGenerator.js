@@ -1,4 +1,4 @@
-var orderLog = require('../orderLog.js');
+var orderLog = require('../DB/orderLog.js');
 
 function calculateNumberOfCandles(startTime, endTime, candleSize){
  return Math.ceil((endTime - startTime)/candleSize);
