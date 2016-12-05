@@ -20,15 +20,23 @@ export class GoogleChartComponent implements OnInit {
 	public candlestickOptions = {
 		legend: 'none',
 		height: 800,
-		colors: ['gray'],
+    backgroundColor : '#101010',
+		colors: ['#aaaaaa'],
 		vAxis: { 
-		 title :'price (ZAR)',
-		 gridlines : {count: 10}
+      title :'price (ZAR)',
+      titleTextStyle: {
+        color: 'white'
+      },
+      textStyle: {color: 'white'}
 		},
 		hAxis: {
-			title: "Time",
-			slantedText: true,  /* Enable slantedText for horizontal axis */
-			slantedTextAngle: 90
+      title: 'Time',
+      titleTextStyle: {
+        color: 'white'
+      },
+      textStyle: {color: 'white'},
+      slantedText: true,  /* Enable slantedText for horizontal axis */
+      slantedTextAngle: 90
 		},
 		candlestick: {
 			fallingColor: { strokeWidth: 0, fill: '#a52714' }, // red

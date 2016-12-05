@@ -2,9 +2,10 @@
   <div [innerHTML]="title"></div>
 </h1>
 
-<div class="container-fluid">
+<div class="container-fluid" style="background-color: #151515; color: white">
 	<div class="row">
-		<div class="col-md-10" id="candlestick_chart" [chartData]="candlestickData" [chartOptions] = "candlestickOptions" chartType="CandlestickChart" GoogleChart ></div>
+		<div class="col-md-10" id="candlestick_chart" [chartData]="candlestickData" [chartOptions] = "candlestickOptions" chartType="CandlestickChart" GoogleChart >
+    </div>
 		<div class="col-md-2">
       <br />
       <br />
