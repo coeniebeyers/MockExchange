@@ -51,44 +51,42 @@ function getCandleStickData(interval, cb){
 
   candlestickCache.FetchCandlesticks(startTime, endOfSecondLastCandlestick, interval, function(candlesticks){
     if(candlesticks){
-      
+      console.log('if we are getting to this point, something has gone wrong');
     } else {
+      orderLog.FetchLog(startTime, endTime, function(docs){
+        for(index in docs){
+          trades.push({
+            timestamp: docs[index].order2.timestamp,
+            amount: docs[index].amount,
+            price: docs[index].order1.price
+          });
+        }
 
+        getOHLCCandles(startTime, endTime, trades, candleSize, function(candles){
+          cb(candles);
+        });	
+      });
     }
-  }
-
-	orderLog.FetchLog(startTime, endTime, function(docs){
-    for(index in docs){
-			trades.push({
-				timestamp: docs[index].order2.timestamp,
-				amount: docs[index].amount,
-				price: docs[index].order1.price
-			});
-		}
-
-		getOHLCCandles(startTime, endTime, trades, candleSize, function(candles){
-			cb(candles);
-		});	
   });
 }
 
 // Candle size in seconds
 function getOHLCCandles(startTime, endTime, tradeList, candleSize, cb){
- var endOfCurrentCandle = startTime + candleSize;
- var numberOfCandles = calculateNumberOfCandles(startTime, endTime, candleSize);
+  var endOfCurrentCandle = startTime + candleSize;
+  var numberOfCandles = calculateNumberOfCandles(startTime, endTime, candleSize);
 
- var trade = { timestamp: startTime, amount: 0, price: 0 };
- var tradeListIndex = 0;
- if(tradeList.length>0){
+  var trade = { timestamp: startTime, amount: 0, price: 0 };
+  var tradeListIndex = 0;
+  if(tradeList.length>0){
     trade = tradeList[tradeListIndex];
- }
- var candleList = [];
+  }
+  var candleList = [];
 
- for(var i = 0; i < numberOfCandles; i++){
+  for(var i = 0; i < numberOfCandles; i++){
    endOfCurrentCandle = startTime + (i + 1)*candleSize;
    var d = new Date(endOfCurrentCandle);
    var endOfCurrentCandleTime = (d.getHours()<10?'0':'') + d.getHours() + ':' + (d.getMinutes()<10?'0':'') + d.getMinutes();
-   if(tradeList[tradeListIndex].timestamp > endOfCurrentCandle){
+   if(!tradeList || tradeList.length==0 || tradeList[tradeListIndex].timestamp > endOfCurrentCandle){
      var emptyCandleInfo = {
        open: 0,
        high: 0,
@@ -138,8 +136,8 @@ function getOHLCCandles(startTime, endTime, tradeList, candleSize, cb){
      };
      candleList.push(candleInfo);    
    }
- }
- cb(candleList);
+  }
+  cb(candleList);
 }
 
 exports.GetCandleStickData = getCandleStickData;
