@@ -65,6 +65,7 @@ events.on('displayStats', function(){
 
 function round(number, constant){
   return Math.round(number*constant)/constant;
+  //return Number((Math.round(number*constant)/constant).toFixed(4));
   //return number;
 }
 
@@ -392,8 +393,12 @@ function auditTotals(){
     totalCurrency2 = round(totalCurrency2, config.currency2.constant);
   }  
 
-  if(Math.abs(totalCurrency1 - 100*accountList.length) > 0 
-      || Math.abs(totalCurrency2 - 100*accountList.length) > 0){
+  var totalDeposited1 = accountBalance*accountList.length;
+  var totalDeposited2 = accountBalance*accountList.length;
+  var diffCurrency1 = Math.abs(totalCurrency1 - totalDeposited1);
+  var diffCurrency2 = Math.abs(totalCurrency2 - totalDeposited2);
+
+  if(Number(diffCurrency1) > 0 || Number(diffCurrency2) > 0){
     console.log('ERROR: Audited totals: '+'\nBTC: '+totalCurrency1+'\nUSD: '+totalCurrency2);
   }
 }
@@ -402,7 +407,7 @@ var accountList = [];
 var accountBalance = 100;
 
 function createAccounts(){
-  for(var i = 0; i < 1000; i++){
+  for(var i = 0; i < 10000; i++){
     accountList.push({
       currency1: accountBalance,
       reservedCurrency1: 0,
@@ -549,19 +554,20 @@ function createOrder(cb){
     amount: offer.amount
   };
 
-  if(order.type == 'ask' && order.amount > (account.currency1 - account.reservedCurrency1)){
+  /*if(order.type == 'ask' && order.amount > (account.currency1 - account.reservedCurrency1)){
     cb(null); 
   } else if(order.type == 'bid' 
       && (order.amount*order.price) > (account.currency2 - account.reservedCurrency2)){
     cb(null)
   } else {
     cb(order);
-  }
+  }*/
+  cb(order);
 }
 
 function createNewOrders(){
   setInterval(function(){
-    for(var i = 1000; i--;){
+    for(var i = 1; i--;){
       createOrder(function(order){
         if(order){
           order.orderEmitTime = new Date().getTime(),
@@ -569,20 +575,20 @@ function createNewOrders(){
         }
       });
     }
-  }, 1);  
+  }, 100);  
 }
 
 function createCancelOrders(){
   setInterval(function(){
     if(bids.length > 1 && asks.length > 1){
-      for(var i = Math.round(Math.random()*500); i--;){
+      for(var i = Math.round(Math.random()*10); i--;){
         createCancelOrder(function(order){
           order.orderEmitTime = new Date().getTime(),
           events.emit('newOrder', order);
         });
       }
     }
-  }, 1);  
+  }, 100);  
 }
 
 function startExchangeSimulation(){
@@ -602,14 +608,15 @@ function startExchangeSimulation(){
     startTime = new Date().getTime();
   }
   createAccounts();
-  createNewOrders();
-  createCancelOrders();
+  //createNewOrders();
+  //createCancelOrders();
 }
 
-function sumbitNewOrderForMatching(newOrderFromUI){
+function submitNewOrderForMatching(newOrderFromUI, cb){
   events.emit('newOrder', newOrderFromUI);
+  cb({submitted: true});
 }
 
-exports.SumbitNewOrderForMatching = sumbitNewOrderForMatching;
+exports.SubmitNewOrderForMatching = submitNewOrderForMatching;
 exports.StartExchangeSimulation = startExchangeSimulation;
 exports.GetStats = getStats;
