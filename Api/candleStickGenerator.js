@@ -1,4 +1,5 @@
 var orderLog = require('../DB/orderLog.js');
+var candlestickCache = require('../DB/candlestickCache.js');
 
 function calculateNumberOfCandles(startTime, endTime, candleSize){
  return Math.ceil((endTime - startTime)/candleSize);
@@ -14,20 +15,20 @@ function getCandleStickData(interval, cb){
   var noSecondsToQuery = 0;
   var noGraphIntervals = 50;
   var trades = [];
-  var endTime = new Date();
-  endTime.setSeconds(0, 0);
+  var endOfSecondLastCandlestick = new Date();
+  endOfSecondLastCandlestick.setSeconds(0, 0);
   var candleSize = 60000;
 
   switch(interval.toLowerCase()) {
     case 'day'    :  {
       noSecondsToQuery = noGraphIntervals * 3600 * 24;  
-      endTime.setHours(0);
+      endOfSecondLastCandlestick.setHours(0);
       candleSize = candleSize * 60 * 24;
       break;
     }
     case 'hour'   :  {
       noSecondsToQuery = noGraphIntervals * 3600;  
-      endTime.setMinutes(0);
+      endOfSecondLastCandlestick.setMinutes(0);
       candleSize = candleSize * 60;
       break;
     }
@@ -41,10 +42,20 @@ function getCandleStickData(interval, cb){
     }
   }
 
-  endTime = endTime.getTime();
+  endOfSecondLastCandlestick = endOfSecondLastCandlestick.getTime();
   
-  var startTime = subtractSeconds(endTime, noSecondsToQuery);
-  endTime = Date.now();
+  var startTime = subtractSeconds(endOfSecondLastCandlestick, noSecondsToQuery);
+  var endTime = Date.now();
+
+  //First check to see if the previous candlesticks are cached
+
+  candlestickCache.FetchCandlesticks(startTime, endOfSecondLastCandlestick, interval, function(candlesticks){
+    if(candlesticks){
+      
+    } else {
+
+    }
+  }
 
 	orderLog.FetchLog(startTime, endTime, function(docs){
     for(index in docs){
