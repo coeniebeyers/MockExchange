@@ -12,20 +12,10 @@ import 'rxjs/add/operator/map';
 })
 export class AppComponent {
 
-  public candlestickData = [['Date', 'Trades', 'Open', 'Close', 'High']]; 
-
-  public candlestickOptions = {
-      legend: 'none',
-      height: 600,
-      vAxis: { 
-       title :'price (ZAR)'
-      },
-			hAxis: {
-        title: "Time",
-        slantedText: true,  /* Enable slantedText for horizontal axis */
-        slantedTextAngle: 90
-      }
-    };
+  private asks = [];
+  private bids = [];
+  private lastTradePrice = 0.00;
+  private lastTradeAmount = 0.00;
 
   constructor(
     private http: Http
@@ -34,29 +24,51 @@ export class AppComponent {
 
   ngOnInit() {
     this.fetchData();
+    setInterval(() =>{
+      this.fetchData();
+      },500
+    );
   }
 
-  fetchData(){
-    let headers = new Headers({ 'Content-Type': 'application/json' });
-    let options = new RequestOptions({ headers: headers });
-    this.http.get('http://localhost:3032/getCandleSticks', options)
+  getLastTrade(headers, options){
+    this.http.get('http://localhost:3033/getlasttrade')
       .map(response => response.json())
 			.subscribe(
 				data => {
           if(data["err"] && data["err"] != ''){
             console.log('An error occured: ', data["err"]);
           } else {
-            this.candlestickData = [['Date', 'Trades', 'Open', 'Close', 'High']]; 
-            console.log('data:', data);
-            for(var index in data){
-              this.candlestickData.push([data[index].endOfCurrentCandleTime, data[index].low, data[index].open, data[index].close, data[index].high]);
-            }
+            this.lastTradePrice = data["price"];
+            this.lastTradeAmount = data["amount"];
           }
         },
 				err => { console.log('error:', err); }
 			);
+  }
 
+  getBidsAndAsks(headers, options){
+    this.http.get('http://localhost:3033/getbidsandasks')
+      .map(response => response.json())
+			.subscribe(
+				data => {
+          if(data["err"] && data["err"] != ''){
+            console.log('An error occured: ', data["err"]);
+          } else {
+            var tmpAsks = data["asks"];
+            tmpAsks.reverse();
+            this.asks = tmpAsks;
+            this.bids = data["bids"];
+          }
+        },
+				err => { console.log('error:', err); }
+			);
+  }
 
+  fetchData(){
+    let headers = new Headers({ 'Content-Type': 'application/json' });
+    let options = new RequestOptions({ headers: headers });
+    this.getBidsAndAsks(headers, options);
+    this.getLastTrade(headers, options);
   }
 
   title = 'Found<sup>e</sup>ry Crypto Exchange';

@@ -17,6 +17,33 @@ export class GoogleChartComponent implements OnInit {
 
   public candlestickDataRefresh = [['Date', 'Trades', 'Open', 'Close', 'High']]; 
 
+	public candlestickOptions = {
+		legend: 'none',
+		height: 800,
+    backgroundColor : '#101010',
+		colors: ['#aaaaaa'],
+		vAxis: { 
+      title :'price (ZAR)',
+      titleTextStyle: {
+        color: 'white'
+      },
+      textStyle: {color: 'white'}
+		},
+		hAxis: {
+      title: 'Time',
+      titleTextStyle: {
+        color: 'white'
+      },
+      textStyle: {color: 'white'},
+      slantedText: true,  /* Enable slantedText for horizontal axis */
+      slantedTextAngle: 90
+		},
+		candlestick: {
+			fallingColor: { strokeWidth: 0, fill: '#a52714' }, // red
+			risingColor: { strokeWidth: 0, fill: '#0f9d58' }   // green
+		}
+	};
+
   constructor(
     public element: ElementRef,
     private http: Http) {
@@ -26,12 +53,10 @@ export class GoogleChartComponent implements OnInit {
   ngOnInit() {
     google.charts.load('current', {'packages':['corechart']});
     this.fetchData();
-/*
     setInterval(() =>{
       this.fetchData();
       },2500
     );
-*/
   }
 
   drawGraph (chartOptions,chartType,chartData,ele) {
@@ -44,7 +69,6 @@ export class GoogleChartComponent implements OnInit {
         options:chartOptions || {},
         containerId: ele.id
       });
-      console.log('elementtId:', ele.id);
       wrapper.draw();
     }
   }
@@ -65,11 +89,10 @@ export class GoogleChartComponent implements OnInit {
             console.log('An error occured: ', data["err"]);
           } else {
             this.candlestickDataRefresh = [['Date', 'Trades', 'Open', 'Close', 'High']]; 
-            console.log('data:', data);
             for(var index in data){
               this.candlestickDataRefresh.push([data[index].endOfCurrentCandleTime, data[index].low, data[index].open, data[index].close, data[index].high]);
             }
-            this.drawGraph(this.chartOptions,this.chartType,this.candlestickDataRefresh,this._element)
+            this.drawGraph(this.candlestickOptions,this.chartType,this.candlestickDataRefresh,this._element)
           }
         },
 				err => { console.log('error:', err); }
