@@ -17,6 +17,19 @@ export class GoogleChartComponent implements OnInit {
 
   public candlestickDataRefresh = [['Date', 'Trades', 'Open', 'Close', 'High']]; 
 
+	public candlestickOptions = {
+		legend: 'none',
+		height: 600,
+		vAxis: { 
+		 title :'price (ZAR)'
+		},
+		hAxis: {
+			title: "Time",
+			slantedText: true,  /* Enable slantedText for horizontal axis */
+			slantedTextAngle: 90
+		}
+	};
+
   constructor(
     public element: ElementRef,
     private http: Http) {
@@ -65,7 +78,7 @@ export class GoogleChartComponent implements OnInit {
             for(var index in data){
               this.candlestickDataRefresh.push([data[index].endOfCurrentCandleTime, data[index].low, data[index].open, data[index].close, data[index].high]);
             }
-            this.drawGraph(this.chartOptions,this.chartType,this.candlestickDataRefresh,this._element)
+            this.drawGraph(this.candlestickOptions,this.chartType,this.candlestickDataRefresh,this._element)
           }
         },
 				err => { console.log('error:', err); }

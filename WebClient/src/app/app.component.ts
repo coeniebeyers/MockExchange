@@ -24,7 +24,7 @@ export class AppComponent {
     this.fetchData();
     setInterval(() =>{
       this.fetchData();
-      },2500
+      },500
     );
   }
 
