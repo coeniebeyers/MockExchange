@@ -1,7 +1,7 @@
-var express = require('express')
-var bodyParser = require('body-parser')
-var app = express()
-var exchange = require('./exchange.js')
+var express = require('express');
+var bodyParser = require('body-parser');
+var app = express();
+var exchange = require('./exchange.js');
 
 app.use(function (req, res, next) {
   res.setHeader('Access-Control-Allow-Origin', 'http://localhost:4200');
@@ -34,10 +34,25 @@ app.get('/getStats', function (req, res) {
 	exchange.GetStats(function(stats){
 		res.json(stats);
 	});
-})
+});
+
+app.get('/submitOrder', function (req, res) {
+  var order = {
+    timestamp: Number(req.query.timestamp),
+    id: Number(req.query.id),
+    accountId: req.query.accountId,
+    type: req.query.type,
+    price: Number(req.query.price),
+    amount: Number(req.query.amount)
+  };
+  console.log('order', order);
+	exchange.SubmitNewOrderForMatching(order, function(result){
+		res.json(result);
+	});
+});
 
 app.listen(3033, function () {
   console.log('Exchange engine is running on port 3033')
-})
+});
 
 exchange.StartExchangeSimulation();
