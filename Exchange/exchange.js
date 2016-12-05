@@ -43,11 +43,29 @@ var bids = [];
 
 var lastTraded = null;
 
+function getLastTrade(cb){
+  if(lastTraded){
+    lastTraded.price = Number(lastTraded.price).toFixed(2);
+    lastTraded.amount = Number(lastTraded.amount).toFixed(2);
+  }
+  cb(lastTraded);
+}
+
 function getBidsAndAsks(maxNo, cb){
   var bidsAndAsks = {
     bids : bids.slice(0,maxNo),
     asks : asks.slice(0,maxNo)
   };
+
+  for(var index in bidsAndAsks.bids){
+    bidsAndAsks.bids[index].price = Number(bidsAndAsks.bids[index].price).toFixed(2);
+    bidsAndAsks.bids[index].amount = Number(bidsAndAsks.bids[index].amount).toFixed(2);
+  }
+
+  for(var index in bidsAndAsks.asks){
+    bidsAndAsks.asks[index].price = Number(bidsAndAsks.asks[index].price).toFixed(2);
+    bidsAndAsks.asks[index].amount = Number(bidsAndAsks.asks[index].amount).toFixed(2);
+  }
 
   cb(bidsAndAsks);
 }
@@ -622,3 +640,4 @@ exports.SumbitNewOrderForMatching = sumbitNewOrderForMatching;
 exports.StartExchangeSimulation = startExchangeSimulation;
 exports.GetStats = getStats;
 exports.GetBidsAndAsks = getBidsAndAsks;
+exports.GetLastTrade = getLastTrade;

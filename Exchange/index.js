@@ -17,6 +17,13 @@ app.use(bodyParser.urlencoded({
 
 app.use(bodyParser.json());
 
+app.get('/getLastTrade', function (req, res) {
+	exchange.GetLastTrade(function(lastTrade){
+    console.log('lastTrade:', lastTrade);
+		res.json(lastTrade);
+	});
+})
+
 app.get('/getBidsAndAsks', function (req, res) {
 	exchange.GetBidsAndAsks(12, function(bidsAndAsks){
 		res.json(bidsAndAsks);
