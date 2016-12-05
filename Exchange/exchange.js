@@ -225,12 +225,12 @@ function updateOrderBook(order){
       }
     }
   } else if(order.type == 'cancelbid'){
-    var i = getIndex(0, bids.length-1, bids, order.orderToCancel, 'desc');
+    var i = getIndex(0, bids.length-1, bids, order, 'desc');
     if(i !== null){
       bids.splice(i, 1);
     }
   } else if(order.type == 'cancelask'){
-    var i = getIndex(0, asks.length-1, asks, order.orderToCancel, 'asc');
+    var i = getIndex(0, asks.length-1, asks, order, 'asc');
     if(i !== null){
       asks.splice(i, 1);
     }
@@ -433,7 +433,7 @@ var accountList = [];
 var accountBalance = 100;
 
 function createAccounts(){
-  for(var i = 0; i < 10000; i++){
+  for(var i = 0; i < 1000; i++){
     accountList.push({
       currency1: accountBalance,
       reservedCurrency1: 0,
@@ -548,12 +548,11 @@ function createCancelOrder(cb){
     bidOrAsk = 'cancel' + bidOrAsk;
     var order = {
       timestamp: orderTimestamp,
-      id: orderId,
+      id: orderToCancel.id,
       accountId: orderToCancel.accountId,
       type: bidOrAsk,
       price: orderToCancel.price,
       amount: orderToCancel.amount,
-      orderToCancel: orderToCancel,
     };
     cb(order);
   }
@@ -621,7 +620,7 @@ function startExchangeSimulation(){
 
   setInterval(function(){
     events.emit('displayStats');
-  }, 1000);
+  }, 2000);
 
   /*setInterval(function(){
     console.log('---');
