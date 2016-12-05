@@ -19,14 +19,20 @@ export class GoogleChartComponent implements OnInit {
 
 	public candlestickOptions = {
 		legend: 'none',
-		height: 600,
+		height: 800,
+		colors: ['gray'],
 		vAxis: { 
-		 title :'price (ZAR)'
+		 title :'price (ZAR)',
+		 gridlines : {count: 10}
 		},
 		hAxis: {
 			title: "Time",
 			slantedText: true,  /* Enable slantedText for horizontal axis */
 			slantedTextAngle: 90
+		},
+		candlestick: {
+			fallingColor: { strokeWidth: 0, fill: '#a52714' }, // red
+			risingColor: { strokeWidth: 0, fill: '#0f9d58' }   // green
 		}
 	};
 
