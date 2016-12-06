@@ -32,6 +32,11 @@ function getCandleStickData(interval, cb){
       candleSize = candleSize * 60;
       break;
     }
+    case '10 minute' :  {
+      noSecondsToQuery = noGraphIntervals * 60 * 10;  
+      candleSize = candleSize * 10;
+      break;
+    }
     case 'minute' :  {
       noSecondsToQuery = noGraphIntervals * 60;  
       break;

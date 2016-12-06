@@ -18,7 +18,7 @@ app.use(bodyParser.urlencoded({
 app.use(bodyParser.json());
 
 app.get('/getCandleSticks', function (req, res) {
-	candleStickGenerator.GetCandleStickData("minute", function(candleSticks){
+	candleStickGenerator.GetCandleStickData("10 minute", function(candleSticks){
 		res.json(candleSticks);
 	});
 })

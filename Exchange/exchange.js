@@ -15,6 +15,9 @@ var config = {
   }
 };
 
+var price = 8;
+var shifter = 0.2;
+
 child.stderr.on('data', function(data){
   console.log('err data:');
   console.log(data.toString());
@@ -83,9 +86,9 @@ function getStats(cb){
 }
 
 events.on('displayStats', function(){
-  console.log('---');
+  //console.log('---');
   getStats(function(stats){
-    console.log(stats);
+    //console.log(stats);
   });
 });
 
@@ -225,12 +228,12 @@ function updateOrderBook(order){
       }
     }
   } else if(order.type == 'cancelbid'){
-    var i = getIndex(0, bids.length-1, bids, order, 'desc');
+    var i = getIndex(0, bids.length-1, bids, order.orderToCancel, 'desc');
     if(i !== null){
       bids.splice(i, 1);
     }
   } else if(order.type == 'cancelask'){
-    var i = getIndex(0, asks.length-1, asks, order, 'asc');
+    var i = getIndex(0, asks.length-1, asks, order.orderToCancel, 'asc');
     if(i !== null){
       asks.splice(i, 1);
     }
@@ -435,7 +438,7 @@ var accountList = [];
 var accountBalance = 100;
 
 function createAccounts(){
-  for(var i = 0; i < 1000; i++){
+  for(var i = 0; i < 10000; i++){
     accountList.push({
       currency1: accountBalance,
       reservedCurrency1: 0,
@@ -519,7 +522,11 @@ function displayAccountInformation(accountId){
 }
 
 function getBidOrAsk(){
-  var res = Math.random() >= 0.5;
+  var splitNumber = 0.7;
+  if(lastTraded && lastTraded.price){
+    if(lastTraded.price > 40) splitNumber = 0.3;  
+  }
+  var res = Math.random() >= splitNumber;
   if(res){
     return 'bid';
   } else {
@@ -528,16 +535,16 @@ function getBidOrAsk(){
 }
 
 function getOffer(){
-  var price = 8;
-  var shifter = 0.05;
   if(lastTraded && lastTraded.price){
     var diff = ((Math.floor(Math.random() * 100))/80) - shifter;
+    console.log('diff:', diff);
     price = price + diff;
+    console.log('price: ', price);
     if(price < 10){
-      shifter = 0.05;
+      shifter = 0.6;
     }
-    if(price > 20){
-      shifter = 0.95;
+    if(price > 40){
+      shifter = 0.9;
     }
   }
   var amount = Math.floor((Math.random() * 100) + 1);
@@ -563,11 +570,12 @@ function createCancelOrder(cb){
     bidOrAsk = 'cancel' + bidOrAsk;
     var order = {
       timestamp: orderTimestamp,
-      id: orderToCancel.id,
+      id: orderId,
       accountId: orderToCancel.accountId,
       type: bidOrAsk,
       price: orderToCancel.price,
       amount: orderToCancel.amount,
+      orderToCancel: orderToCancel,
     };
     cb(order);
   }
@@ -639,7 +647,7 @@ function startExchangeSimulation(){
 
   setInterval(function(){
     events.emit('displayStats');
-  }, 2000);
+  }, 1000);
 
   /*setInterval(function(){
     console.log('---');
@@ -652,8 +660,8 @@ function startExchangeSimulation(){
     startTime = new Date().getTime();
   }
   createAccounts();
-  createNewOrders();
-  createCancelOrders();
+//  createNewOrders();
+//  createCancelOrders();
 }
 
 function submitNewOrderForMatching(newOrderFromUI, cb){
