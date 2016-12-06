@@ -109,6 +109,10 @@ events.on('newOrder', function(order){
     var amount = order.amount;
     account.reservedCurrency1 -= amount;
     account.reservedCurrency1 = round(account.reservedCurrency1, config.currency1.constant);
+  } else if(order.type == 'updateask'){
+    var amount = order.amount;
+    account.reservedCurrency1 += amount;
+    account.reservedCurrency1 = round(account.reservedCurrency1, config.currency1.constant);
   } else if(order.type == 'bid'){
     var amount = order.amount * order.price;
     account.reservedCurrency2 += amount;
@@ -116,6 +120,10 @@ events.on('newOrder', function(order){
   } else if(order.type == 'cancelbid'){
     var amount = order.amount * order.price;
     account.reservedCurrency2 -= amount;
+    account.reservedCurrency2 = round(account.reservedCurrency2, config.currency2.constant);
+  } else if(order.type == 'updatebid'){
+    var amount = order.amount * order.price;
+    account.reservedCurrency2 += amount;
     account.reservedCurrency2 = round(account.reservedCurrency2, config.currency2.constant);
   }
 });
@@ -232,10 +240,22 @@ function updateOrderBook(order){
     if(i !== null){
       bids.splice(i, 1);
     }
+  } else if(order.type == 'updatebid'){
+    var i = getIndex(0, bids.length-1, bids, order, 'desc');
+    if(i !== null && bids[i] !== undefined){
+      bids[i].amount = order.amount;
+      bids[i].amount = round(bids[i].amount, config.currency2.constant);
+    }
   } else if(order.type == 'cancelask'){
     var i = getIndex(0, asks.length-1, asks, order.orderToCancel, 'asc');
     if(i !== null){
       asks.splice(i, 1);
+    }
+  } else if(order.type == 'updateask'){
+    var i = getIndex(0, asks.length-1, asks, order, 'asc');
+    if(i !== null && asks[i] !== undefined){
+      asks[i].amount = order.amount;
+      asks[i].amount = round(asks[i].amount, config.currency1.constant);
     }
   }
 }
