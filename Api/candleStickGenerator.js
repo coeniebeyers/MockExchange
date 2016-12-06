@@ -11,44 +11,62 @@ function subtractSeconds(endDate, secondsToSubtract) {
   return startDate.getTime();
 }
 
+function setLastBucketParameters(noMinutes, candleSize, endOfSecondLastCandlestick){
+  var noGraphIntervals = 50;
+  var noSecondsToQuery = noGraphIntervals * 60 * noMinutes;  
+  candleSize = candleSize * noMinutes;
+  if(noMinutes<60){
+    var mn = endOfSecondLastCandlestick.getMinutes();
+    var mn = parseInt(mn / noMinutes, noMinutes) * noMinutes;
+    endOfSecondLastCandlestick.setMinutes(mn);
+  }
+  if(noMinutes>=60){
+    endOfSecondLastCandlestick.setMinutes(0);
+  }
+  if(noMinutes>=(60*24)){
+    endOfSecondLastCandlestick.setHours(0);
+  }
+  
+  return {noSecondsToQuery: noSecondsToQuery, endOfSecondLastCandlestick: endOfSecondLastCandlestick, candleSize: candleSize};
+}
+
 function getCandleStickData(interval, cb){
   var noSecondsToQuery = 0;
-  var noGraphIntervals = 50;
   var trades = [];
   var endOfSecondLastCandlestick = new Date();
   endOfSecondLastCandlestick.setSeconds(0, 0);
   var candleSize = 60000;
-
+  var lastBucketParameters = {noSecondsToQuery: noSecondsToQuery, endOfSecondLastCandlestick: endOfSecondLastCandlestick, candleSize: candleSize};
   switch(interval.toLowerCase()) {
     case 'day'    :  {
-      noSecondsToQuery = noGraphIntervals * 3600 * 24;  
-      endOfSecondLastCandlestick.setHours(0);
-      candleSize = candleSize * 60 * 24;
+      lastBucketParameters = setLastBucketParameters(60*24, candleSize, endOfSecondLastCandlestick);
       break;
     }
     case 'hour'   :  {
-      noSecondsToQuery = noGraphIntervals * 3600;  
-      endOfSecondLastCandlestick.setMinutes(0);
-      candleSize = candleSize * 60;
+      lastBucketParameters = setLastBucketParameters(60, candleSize, endOfSecondLastCandlestick);
       break;
     }
-    case '10 minute' :  {
-      noSecondsToQuery = noGraphIntervals * 60 * 10;  
-      candleSize = candleSize * 10;
-      var mn = endOfSecondLastCandlestick.getMinutes();
-      var mn = parseInt(mn / 10, 10) * 10;
-      endOfSecondLastCandlestick.setMinutes(mn);
+    case '5 minute' :  {
+      lastBucketParameters = setLastBucketParameters(5, candleSize, endOfSecondLastCandlestick);
+      break;
+    }
+    case '15 minute' :  {
+      lastBucketParameters = setLastBucketParameters(15, candleSize, endOfSecondLastCandlestick);
       break;
     }
     case 'minute' :  {
-      noSecondsToQuery = noGraphIntervals * 60;  
+      lastBucketParameters = setLastBucketParameters(1, candleSize, endOfSecondLastCandlestick);
       break;
     }
     default       :  {
-      noSecondsToQuery = noGraphIntervals * 60;  
+      lastBucketParameters = setLastBucketParameters(1, candleSize, endOfSecondLastCandlestick);
       break;
     }
   }
+
+  endOfSecondLastCandlestick = lastBucketParameters.endOfSecondLastCandlestick;
+  noSecondsToQuery = lastBucketParameters.noSecondsToQuery;
+  candleSize = lastBucketParameters.candleSize;
 
   endOfSecondLastCandlestick = endOfSecondLastCandlestick.getTime();
   
