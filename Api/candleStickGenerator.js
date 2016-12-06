@@ -81,6 +81,7 @@ function getOHLCCandles(startTime, endTime, tradeList, candleSize, cb){
     trade = tradeList[tradeListIndex];
   }
   var candleList = [];
+  var close = 0;
 
   for(var i = 0; i < numberOfCandles; i++){
    endOfCurrentCandle = startTime + (i + 1)*candleSize;
@@ -88,14 +89,15 @@ function getOHLCCandles(startTime, endTime, tradeList, candleSize, cb){
    var endOfCurrentCandleTime = (d.getHours()<10?'0':'') + d.getHours() + ':' + (d.getMinutes()<10?'0':'') + d.getMinutes();
    if(!tradeList || tradeList.length==0 || tradeList[tradeListIndex].timestamp > endOfCurrentCandle){
      var emptyCandleInfo = {
-       open: 0,
-       high: 0,
-       low: 0,
-       close: 0,
+       open: close,
+       high: close,
+       low: close,
+       close: close,
        volume: 0,
        endOfCurrentCandle: endOfCurrentCandle,
        endOfCurrentCandleTime: endOfCurrentCandleTime
      };
+     console.log('emplyCandleInfo:', emptyCandleInfo);
      candleList.push(emptyCandleInfo);    
    } else {
      var open = Number(trade.price);
@@ -104,7 +106,7 @@ function getOHLCCandles(startTime, endTime, tradeList, candleSize, cb){
      }
      var high = open;
      var low = open;
-     var close = open;
+     close = open;
      var volume = 0;
 
      for(;trade && trade.timestamp <= endOfCurrentCandle && tradeListIndex < (tradeList.length-1);){
