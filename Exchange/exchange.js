@@ -46,7 +46,7 @@ var lastTraded = null;
 function getLastTrade(cb){
   if(lastTraded){
     lastTraded.price = Number(lastTraded.price).toFixed(2);
-    lastTraded.amount = Number(lastTraded.amount).toFixed(2);
+    lastTraded.amount = Number(lastTraded.amount).toFixed(0);
   }
   cb(lastTraded);
 }
@@ -59,12 +59,12 @@ function getBidsAndAsks(maxNo, cb){
 
   for(var index in bidsAndAsks.bids){
     bidsAndAsks.bids[index].price = Number(bidsAndAsks.bids[index].price).toFixed(2);
-    bidsAndAsks.bids[index].amount = Number(bidsAndAsks.bids[index].amount).toFixed(2);
+    bidsAndAsks.bids[index].amount = Number(bidsAndAsks.bids[index].amount).toFixed(0);
   }
 
   for(var index in bidsAndAsks.asks){
     bidsAndAsks.asks[index].price = Number(bidsAndAsks.asks[index].price).toFixed(2);
-    bidsAndAsks.asks[index].amount = Number(bidsAndAsks.asks[index].amount).toFixed(2);
+    bidsAndAsks.asks[index].amount = Number(bidsAndAsks.asks[index].amount).toFixed(0);
   }
 
   cb(bidsAndAsks);
@@ -425,7 +425,9 @@ function auditTotals(){
   var diffCurrency2 = Math.abs(totalCurrency2 - totalDeposited2);
 
   if(Number(diffCurrency1) > 0 || Number(diffCurrency2) > 0){
+    /*
     console.log('ERROR: Audited totals: '+'\nBTC: '+totalCurrency1+'\nUSD: '+totalCurrency2);
+    */
   }
 }
 
@@ -494,12 +496,14 @@ function auditOrdersToReservedBalances(){
 
       if(Math.abs(totalCurrency1-reservedCurrency1) > 0 
           || Math.abs(totalCurrency2-reservedCurrency2) > 0){
+        /*
         console.log('ERROR: Mismatch between open orders and reserved balance for account:', 
           accountId);
         console.log('totalCurrency1:', totalCurrency1);
         console.log('account.reservedCurrency1:', reservedCurrency1);
         console.log('totalCurrency2:', totalCurrency2);
         console.log('account.reservedCurrency2:', reservedCurrency2);
+        */
       }
     }
   }
@@ -524,8 +528,19 @@ function getBidOrAsk(){
 }
 
 function getOffer(){
-  var price = (Math.floor((Math.random() * 1000) + 1))/100;
-  var amount = (Math.floor((Math.random() * 100) + 1))/100;
+  var price = 8;
+  var shifter = 0.05;
+  if(lastTraded && lastTraded.price){
+    var diff = ((Math.floor(Math.random() * 100))/80) - shifter;
+    price = price + diff;
+    if(price < 10){
+      shifter = 0.05;
+    }
+    if(price > 20){
+      shifter = 0.95;
+    }
+  }
+  var amount = Math.floor((Math.random() * 100) + 1);
   return {price: price, amount: amount};
 }
 
@@ -601,20 +616,24 @@ function createNewOrders(){
         }
       });
     }
-  }, 100);  
+  }, 200);  
 }
 
 function createCancelOrders(){
-  setInterval(function(){
+  var cancelOrder = function(){
     if(bids.length > 1 && asks.length > 1){
-      for(var i = Math.round(Math.random()*10); i--;){
-        createCancelOrder(function(order){
-          order.orderEmitTime = new Date().getTime(),
-          events.emit('newOrder', order);
-        });
-      }
+      var timeOut = 1600 - (bids.length + asks.length);
+      console.log('timeout:', timeOut);
+      createCancelOrder(function(order){
+        order.orderEmitTime = new Date().getTime(),
+        events.emit('newOrder', order);
+      });
+      setTimeout(cancelOrder, timeOut);
+    } else {
+      setTimeout(cancelOrder, 1600);
     }
-  }, 100);  
+  };  
+  setTimeout(cancelOrder, 2000);
 }
 
 function startExchangeSimulation(){
@@ -634,8 +653,8 @@ function startExchangeSimulation(){
     startTime = new Date().getTime();
   }
   createAccounts();
-  //createNewOrders();
-  //createCancelOrders();
+  createNewOrders();
+  createCancelOrders();
 }
 
 function submitNewOrderForMatching(newOrderFromUI, cb){

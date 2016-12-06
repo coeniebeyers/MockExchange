@@ -19,7 +19,6 @@ app.use(bodyParser.json());
 
 app.get('/getLastTrade', function (req, res) {
 	exchange.GetLastTrade(function(lastTrade){
-    console.log('lastTrade:', lastTrade);
 		res.json(lastTrade);
 	});
 })
@@ -45,7 +44,6 @@ app.get('/submitOrder', function (req, res) {
     price: Number(req.query.price),
     amount: Number(req.query.amount)
   };
-  console.log('order', order);
 	exchange.SubmitNewOrderForMatching(order, function(result){
 		res.json(result);
 	});
