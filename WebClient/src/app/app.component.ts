@@ -16,6 +16,7 @@ export class AppComponent {
   private bids = [];
   private lastTradePrice = 0.00;
   private lastTradeAmount = 0.00;
+  private timeInterval = '5 minute';
 
   constructor(
     private http: Http
@@ -69,6 +70,27 @@ export class AppComponent {
     let options = new RequestOptions({ headers: headers });
     this.getBidsAndAsks(headers, options);
     this.getLastTrade(headers, options);
+  }
+
+  updateTimeInterval(){
+    console.log('change time interval', this.timeInterval);
+    let headers = new Headers({ 'Content-Type': 'application/json' });
+    let options = new RequestOptions({ headers: headers });
+    let body = JSON.stringify({
+      'timeInterval' : this.timeInterval
+    });
+    console.log('body:', body);
+    this.http.post('http://localhost:3032/updateTimeInterval', body, options)
+      .map(response => response.json())
+      .subscribe(
+        data => {
+          console.log('response: ', data);
+        },
+        err => { 
+          console.log(err.Message);
+        }
+      );
+
   }
 
   title = 'Found<sup>e</sup>ry Crypto Exchange';

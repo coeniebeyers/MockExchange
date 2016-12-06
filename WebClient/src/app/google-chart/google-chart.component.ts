@@ -90,9 +90,7 @@ export class GoogleChartComponent implements OnInit {
           } else {
             this.candlestickDataRefresh = [['Date', 'Trades', 'Open', 'Close', 'High']]; 
             for(var index in data){
-              console.log('data[index]:', data[index]);
               if(data[index].low > 0 || data[index].high > 0 || data[index].open > 0 ||  data[index].close > 0){
-                console.log('adding');
                 this.candlestickDataRefresh.push([data[index].endOfCurrentCandleTime, data[index].low, data[index].open, data[index].close, data[index].high]);
               }
             }

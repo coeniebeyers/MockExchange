@@ -17,7 +17,7 @@ function setLastBucketParameters(noMinutes, candleSize, endOfSecondLastCandlesti
   candleSize = candleSize * noMinutes;
   if(noMinutes<60){
     var mn = endOfSecondLastCandlestick.getMinutes();
-    var mn = parseInt(mn / noMinutes, noMinutes) * noMinutes;
+    var mn = parseInt(mn / noMinutes, 10) * noMinutes;
     endOfSecondLastCandlestick.setMinutes(mn);
   }
   if(noMinutes>=60){
@@ -28,6 +28,78 @@ function setLastBucketParameters(noMinutes, candleSize, endOfSecondLastCandlesti
   }
   
   return {noSecondsToQuery: noSecondsToQuery, endOfSecondLastCandlestick: endOfSecondLastCandlestick, candleSize: candleSize};
+}
+
+function getOHLCCandles(startTime, endTime, tradeList, candleSize, cb){
+  var endOfCurrentCandle = startTime + candleSize;
+  var endOfPreviousCandle = startTime;
+  var numberOfCandles = calculateNumberOfCandles(startTime, endTime, candleSize);
+
+  var trade = { timestamp: startTime, amount: 0, price: 0 };
+  var tradeListIndex = 0;
+  if(tradeList.length>0){
+    trade = tradeList[tradeListIndex];
+  }
+  var candleList = [];
+  var close = 0;
+
+  for(var i = 0; i < numberOfCandles; i++){
+   endOfCurrentCandle = startTime + (i + 1)*candleSize;
+   endOfPreviousCandle = startTime + i * candleSize;
+   var d = new Date(endOfCurrentCandle);
+   var endOfCurrentCandleTime = (d.getHours()<10?'0':'') + d.getHours() + ':' + (d.getMinutes()<10?'0':'') + d.getMinutes();
+   if(!tradeList || tradeList.length==0 || tradeList[tradeListIndex].timestamp > endOfCurrentCandle){
+     var emptyCandleInfo = {
+       open: close,
+       high: close,
+       low: close,
+       close: close,
+       volume: 0,
+       endOfCurrentCandle: endOfCurrentCandle,
+       endOfCurrentCandleTime: endOfCurrentCandleTime
+     };
+     candleList.push(emptyCandleInfo);    
+   } else {
+     var open = Number(trade.price);
+     if(candleList.length > 0 && trade.timestamp > endOfPreviousCandle){
+       open = candleList[candleList.length-1].close;   
+     }
+     var high = Number(trade.price);
+     var low = Number(trade.price);
+     close = Number(trade.price);
+     var volume = 0;
+
+     for(;trade && trade.timestamp <= endOfCurrentCandle && tradeListIndex < (tradeList.length-1);){
+       var tradePrice = Number(trade.price);
+       if(tradePrice > high){
+         high = tradePrice;
+       }  
+       if(tradePrice < low){
+         low = tradePrice;
+       }
+       volume += Number(trade.amount);
+
+       if(tradeListIndex < (tradeList.length-1)){
+         tradeListIndex++;
+       }
+       trade = tradeList[tradeListIndex];
+     }
+
+     close = Number(tradeList[tradeListIndex-1].price);
+     
+     var candleInfo = {
+       open: open,
+       high: high,
+       low: low,
+       close: close,
+       volume: volume,
+       endOfCurrentCandle: endOfCurrentCandle,
+       endOfCurrentCandleTime: endOfCurrentCandleTime
+     };
+     candleList.push(candleInfo);    
+   }
+  }
+  cb(candleList);
 }
 
 function getCandleStickData(interval, cb){
@@ -54,7 +126,7 @@ function getCandleStickData(interval, cb){
       lastBucketParameters = setLastBucketParameters(15, candleSize, endOfSecondLastCandlestick);
       break;
     }
-    case 'minute' :  {
+    case '1 minute' :  {
       lastBucketParameters = setLastBucketParameters(1, candleSize, endOfSecondLastCandlestick);
       break;
     }
@@ -96,75 +168,5 @@ function getCandleStickData(interval, cb){
   });
 }
 
-// Candle size in seconds
-function getOHLCCandles(startTime, endTime, tradeList, candleSize, cb){
-  var endOfCurrentCandle = startTime + candleSize;
-  var numberOfCandles = calculateNumberOfCandles(startTime, endTime, candleSize);
-
-  var trade = { timestamp: startTime, amount: 0, price: 0 };
-  var tradeListIndex = 0;
-  if(tradeList.length>0){
-    trade = tradeList[tradeListIndex];
-  }
-  var candleList = [];
-  var close = 0;
-
-  for(var i = 0; i < numberOfCandles; i++){
-   endOfCurrentCandle = startTime + (i + 1)*candleSize;
-   var d = new Date(endOfCurrentCandle);
-   var endOfCurrentCandleTime = (d.getHours()<10?'0':'') + d.getHours() + ':' + (d.getMinutes()<10?'0':'') + d.getMinutes();
-   if(!tradeList || tradeList.length==0 || tradeList[tradeListIndex].timestamp > endOfCurrentCandle){
-     var emptyCandleInfo = {
-       open: close,
-       high: close,
-       low: close,
-       close: close,
-       volume: 0,
-       endOfCurrentCandle: endOfCurrentCandle,
-       endOfCurrentCandleTime: endOfCurrentCandleTime
-     };
-     candleList.push(emptyCandleInfo);    
-   } else {
-     var open = Number(trade.price);
-     if(candleList.length > 0 && trade.timestamp > endOfCurrentCandle){
-       open = candleList[candleList.length-1].close;   
-     }
-     var high = open;
-     var low = open;
-     close = open;
-     var volume = 0;
-
-     for(;trade && trade.timestamp <= endOfCurrentCandle && tradeListIndex < (tradeList.length-1);){
-       var tradePrice = Number(trade.price);
-       if(tradePrice > high){
-         high = tradePrice;
-       }  
-       if(tradePrice < low){
-         low = tradePrice;
-       }
-       volume += Number(trade.amount);
-
-       if(tradeListIndex < (tradeList.length-1)){
-         tradeListIndex++;
-       }
-       trade = tradeList[tradeListIndex];
-     }
-
-     close = Number(tradeList[tradeListIndex-1].price);
-     
-     var candleInfo = {
-       open: open,
-       high: high,
-       low: low,
-       close: close,
-       volume: volume,
-       endOfCurrentCandle: endOfCurrentCandle,
-       endOfCurrentCandleTime: endOfCurrentCandleTime
-     };
-     candleList.push(candleInfo);    
-   }
-  }
-  cb(candleList);
-}
 
 exports.GetCandleStickData = getCandleStickData;

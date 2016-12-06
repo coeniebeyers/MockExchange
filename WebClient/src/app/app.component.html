@@ -3,6 +3,9 @@
 </h1>
 
 <div class="container-fluid" style="background-color: #151515; color: white">
+  <div class="row">
+    <div class="col-md-12"><input style="background-color: #151515" [(ngModel)]="timeInterval" (ngModelChange)="updateTimeInterval()"></div>
+  </div>
 	<div class="row">
 		<div class="col-md-10" id="candlestick_chart" [chartData]="candlestickData" [chartOptions] = "candlestickOptions" chartType="CandlestickChart" GoogleChart >
     </div>
@@ -18,8 +21,8 @@
       <div style="min-height:260px; position: relative">
         <table id="asks" style="position: absolute; left: 0; bottom: 0;">
           <tr *ngFor="let row of asks">
-            <td class="text-right" style="border: 1px solid gray; padding: 0px 20px 0px 20px;">{{row.price}}</td>
-            <td class="text-right" style="border: 1px solid gray; padding: 0px 20px 0px 20px; min-width:75px">{{row.amount}}</td>
+            <td class="text-right" style="border: 1px solid gray; padding: 0px 10px 0px 10px;">{{row.price}}</td>
+            <td class="text-right" style="border: 1px solid gray; padding: 0px 10px 0px 10px; min-width:85px">{{row.amount}}</td>
           </tr>
         </table>
       </div>
@@ -29,8 +32,8 @@
             <td>&nbsp;</td>
           </tr>
           <tr>
-            <td class="text-right" style="border: 1px solid gray; padding: 0px 20px 0px 20px;">{{lastTradePrice}}</td>
-            <td class="text-right" style="border: 1px solid gray; padding: 0px 20px 0px 20px; min-width:75px">{{lastTradeAmount}}</td>
+            <td class="text-right" style="border: 1px solid gray; padding: 0px 10px 0px 10px;">{{lastTradePrice}}</td>
+            <td class="text-right" style="border: 1px solid gray; padding: 0px 10px 0px 10px; min-width:85px">{{lastTradeAmount}}</td>
             <td style="border: 1px solid gray; padding: 0px 20px 0px 20px;">Last Trade</td>
           </tr>
           <tr>
@@ -41,8 +44,8 @@
       <div>
         <table id="bids">
           <tr *ngFor="let row of bids">
-            <td class="text-right" style="border: 1px solid gray; padding: 0px 20px 0px 20px;">{{row.price}}</td>
-            <td class="text-right" style="border: 1px solid gray; padding: 0px 20px 0px 20px; min-width:75px">{{row.amount}}</td>
+            <td class="text-right" style="border: 1px solid gray; padding: 0px 10px 0px 10px;">{{row.price}}</td>
+            <td class="text-right" style="border: 1px solid gray; padding: 0px 10px 0px 10px; min-width:85px">{{row.amount}}</td>
           </tr>
         </table>
       </div>
