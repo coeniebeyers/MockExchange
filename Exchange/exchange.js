@@ -86,9 +86,9 @@ function getStats(cb){
 }
 
 events.on('displayStats', function(){
-  //console.log('---');
+  console.log('---');
   getStats(function(stats){
-    //console.log(stats);
+    console.log(stats);
   });
 });
 
@@ -236,7 +236,7 @@ function updateOrderBook(order){
       }
     }
   } else if(order.type == 'cancelbid'){
-    var i = getIndex(0, bids.length-1, bids, order.orderToCancel, 'desc');
+    var i = getIndex(0, bids.length-1, bids, order, 'desc');
     if(i !== null){
       bids.splice(i, 1);
     }
@@ -247,7 +247,7 @@ function updateOrderBook(order){
       bids[i].amount = round(bids[i].amount, config.currency2.constant);
     }
   } else if(order.type == 'cancelask'){
-    var i = getIndex(0, asks.length-1, asks, order.orderToCancel, 'asc');
+    var i = getIndex(0, asks.length-1, asks, order, 'asc');
     if(i !== null){
       asks.splice(i, 1);
     }
