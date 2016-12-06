@@ -35,6 +35,9 @@ function getCandleStickData(interval, cb){
     case '10 minute' :  {
       noSecondsToQuery = noGraphIntervals * 60 * 10;  
       candleSize = candleSize * 10;
+      var mn = endOfSecondLastCandlestick.getMinutes();
+      var mn = parseInt(mn / 10, 10) * 10;
+      endOfSecondLastCandlestick.setMinutes(mn);
       break;
     }
     case 'minute' :  {
@@ -102,7 +105,6 @@ function getOHLCCandles(startTime, endTime, tradeList, candleSize, cb){
        endOfCurrentCandle: endOfCurrentCandle,
        endOfCurrentCandleTime: endOfCurrentCandleTime
      };
-     console.log('emplyCandleInfo:', emptyCandleInfo);
      candleList.push(emptyCandleInfo);    
    } else {
      var open = Number(trade.price);
