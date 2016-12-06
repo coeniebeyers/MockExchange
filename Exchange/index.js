@@ -44,7 +44,7 @@ app.get('/submitOrder', function (req, res) {
     price: Number(req.query.price),
     amount: Number(req.query.amount)
   };
-  console.log('order', order);
+  //console.log('order', order);
 	exchange.SubmitNewOrderForMatching(order, function(result){
 		res.json(result);
 	});
