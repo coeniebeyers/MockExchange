@@ -15,9 +15,6 @@ var config = {
   }
 };
 
-var price = 8;
-var shifter = 0.2;
-
 child.stderr.on('data', function(data){
   console.log('err data:');
   console.log(data.toString());
@@ -517,17 +514,17 @@ function auditOrdersToReservedBalances(){
       var reservedCurrency1 = account.reservedCurrency1;
       var reservedCurrency2 = account.reservedCurrency2;
 
+      /*
       if(Math.abs(totalCurrency1-reservedCurrency1) > 0 
           || Math.abs(totalCurrency2-reservedCurrency2) > 0){
-        /*
         console.log('ERROR: Mismatch between open orders and reserved balance for account:', 
           accountId);
         console.log('totalCurrency1:', totalCurrency1);
         console.log('account.reservedCurrency1:', reservedCurrency1);
         console.log('totalCurrency2:', totalCurrency2);
         console.log('account.reservedCurrency2:', reservedCurrency2);
-        */
       }
+      */
     }
   }
 }
@@ -541,87 +538,9 @@ function displayAccountInformation(accountId){
   console.log('BTC: '+account.reservedCurrency1+' | USD: '+account.reservedCurrency2);
 }
 
-function getBidOrAsk(){
-  var splitNumber = 0.7;
-  if(lastTraded && lastTraded.price){
-    if(lastTraded.price > 40) splitNumber = 0.3;  
-  }
-  var res = Math.random() >= splitNumber;
-  if(res){
-    return 'bid';
-  } else {
-    return 'ask';
-  }
-}
-
-function getOffer(){
-  if(lastTraded && lastTraded.price){
-    var diff = ((Math.floor(Math.random() * 100))/80) - shifter;
-    console.log('diff:', diff);
-    price = price + diff;
-    console.log('price: ', price);
-    if(price < 10){
-      shifter = 0.6;
-    }
-    if(price > 40){
-      shifter = 0.9;
-    }
-  }
-  var amount = Math.floor((Math.random() * 100) + 1);
-  return {price: price, amount: amount};
-}
-
-function getRandomOrder(bidOrAsk){
-  if(bidOrAsk == 'bid'){
-    var rInt = Math.floor(Math.random() * (bids.length-1));
-    return bids[rInt];
-  } else if (bidOrAsk == 'ask'){
-    var rInt = Math.floor(Math.random() * (asks.length-1));
-    return asks[rInt];
-  }
-}
-
-function createCancelOrder(cb){
-  var orderTimestamp = new Date().getTime();  
-  var orderId = uuid.v1();
-  var bidOrAsk = getBidOrAsk();
-  var orderToCancel = getRandomOrder(bidOrAsk);
-  if(orderToCancel !== undefined){
-    bidOrAsk = 'cancel' + bidOrAsk;
-    var order = {
-      timestamp: orderTimestamp,
-      id: orderId,
-      accountId: orderToCancel.accountId,
-      type: bidOrAsk,
-      price: orderToCancel.price,
-      amount: orderToCancel.amount,
-      orderToCancel: orderToCancel,
-    };
-    cb(order);
-  }
-}
-
-// Asks: willing to sell currency1 for currency2
-// Bids: willing to buy currency1 with currency2
 // Assume just one currency pair right now, BTCUSD
-function createOrder(cb){
-  // Choose an account
-  var accountNr = Math.floor((Math.random() * (accountList.length)) + 0);
-  var account = accountList[accountNr];
-
-  var orderTimestamp = new Date().getTime();  
-  var orderId = uuid.v1();
-  var bidOrAsk = getBidOrAsk();
-  var offer = getOffer();
-  var order = {
-    timestamp: orderTimestamp,
-    id: orderId,
-    accountId: account.id,
-    type: bidOrAsk,
-    price: offer.price,
-    amount: offer.amount
-  };
-
+  // TODO: this needs to move to a place where account balances are checked before the order is 
+  // allowed on the orderbook
   /*if(order.type == 'ask' && order.amount > (account.currency1 - account.reservedCurrency1)){
     cb(null); 
   } else if(order.type == 'bid' 
@@ -630,38 +549,6 @@ function createOrder(cb){
   } else {
     cb(order);
   }*/
-  cb(order);
-}
-
-function createNewOrders(){
-  setInterval(function(){
-    for(var i = 1; i--;){
-      createOrder(function(order){
-        if(order){
-          order.orderEmitTime = new Date().getTime(),
-          events.emit('newOrder', order);
-        }
-      });
-    }
-  }, 200);  
-}
-
-function createCancelOrders(){
-  var cancelOrder = function(){
-    if(bids.length > 1 && asks.length > 1){
-      var timeOut = 1600 - (bids.length + asks.length);
-      console.log('timeout:', timeOut);
-      createCancelOrder(function(order){
-        order.orderEmitTime = new Date().getTime(),
-        events.emit('newOrder', order);
-      });
-      setTimeout(cancelOrder, timeOut);
-    } else {
-      setTimeout(cancelOrder, 1600);
-    }
-  };  
-  setTimeout(cancelOrder, 2000);
-}
 
 function startExchangeSimulation(){
 
@@ -680,8 +567,6 @@ function startExchangeSimulation(){
     startTime = new Date().getTime();
   }
   createAccounts();
-//  createNewOrders();
-//  createCancelOrders();
 }
 
 function submitNewOrderForMatching(newOrderFromUI, cb){
