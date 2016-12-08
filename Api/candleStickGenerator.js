@@ -85,7 +85,9 @@ function getOHLCCandles(startTime, endTime, tradeList, candleSize, cb){
        trade = tradeList[tradeListIndex];
      }
 
-     close = Number(tradeList[tradeListIndex-1].price);
+     if(tradeListIndex>0){
+       close = Number(tradeList[tradeListIndex-1].price);
+     }
      
      var candleInfo = {
        open: open,

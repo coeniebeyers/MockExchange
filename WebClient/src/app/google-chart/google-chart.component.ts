@@ -1,10 +1,15 @@
-import {Directive, ElementRef, Input, OnInit} from '@angular/core';
-import {Http, Response, Headers, RequestOptions } from "@angular/http";
+import {Component, Directive, ElementRef, Input, OnInit} from '@angular/core';
 import {Observable} from 'rxjs/Rx';
+import {GraphService} from '../graph.service.ts';
 import 'rxjs/add/operator/map';
 
 declare var google:any;
 declare var googleLoaded:any;
+
+@Component({
+  providers: [GraphService]
+})
+
 @Directive({
   selector: '[GoogleChart]'
 })
@@ -15,7 +20,10 @@ export class GoogleChartComponent implements OnInit {
   @Input('chartOptions') public chartOptions: Object;
   @Input('chartData') public chartData: Object;
 
+  /*TODO: Need to move all reference to candlestick config out of the generic graph component */
+
   public candlestickDataRefresh = [['Date', 'Trades', 'Open', 'Close', 'High']]; 
+
 
 	public candlestickOptions = {
 		legend: 'none',
@@ -46,15 +54,22 @@ export class GoogleChartComponent implements OnInit {
 
   constructor(
     public element: ElementRef,
-    private http: Http) {
-    this._element = this.element.nativeElement;
+    private graphService: GraphService) {
+      this._element = this.element.nativeElement;
   }
 
   ngOnInit() {
     google.charts.load('current', {'packages':['corechart']});
+		this.graphService.timeIntervalUpdated.subscribe((timeInterval) => {
+			this.fetchData();
+		});
     this.fetchData();
     setInterval(() =>{
       this.fetchData();
+
+			/*This is just to test out the updating of the service*/
+			var config = this.graphService.getConfig();
+				this.candlestickOptions.hAxis.title = config["timeInterval"];
       },2500
     );
   }
@@ -73,30 +88,22 @@ export class GoogleChartComponent implements OnInit {
     }
   }
 
-  /**
-   This is definitely not in the right place
-   Need to figure out where to put it
-   There is a mix of concerns here
-   **/
-  fetchData(){
-    let headers = new Headers({ 'Content-Type': 'application/json' });
-    let options = new RequestOptions({ headers: headers });
-    this.http.get('http://localhost:3032/getCandleSticks', options)
-      .map(response => response.json())
+	fetchData(){
+		this.graphService.fetchData(this.chartType)
 			.subscribe(
 				data => {
-          if(data["err"] && data["err"] != ''){
-            console.log('An error occured: ', data["err"]);
-          } else {
-            this.candlestickDataRefresh = [['Date', 'Trades', 'Open', 'Close', 'High']]; 
-            for(var index in data){
-              if(data[index].low > 0 || data[index].high > 0 || data[index].open > 0 ||  data[index].close > 0){
-                this.candlestickDataRefresh.push([data[index].endOfCurrentCandleTime, data[index].low, data[index].open, data[index].close, data[index].high]);
-              }
-            }
-            this.drawGraph(this.candlestickOptions,this.chartType,this.candlestickDataRefresh,this._element)
-          }
-        },
+					if(data["err"] && data["err"] != ''){
+						console.log('An error occured: ', data["err"]);
+					} else {
+						this.candlestickDataRefresh = [['Date', 'Trades', 'Open', 'Close', 'High']]; 
+						for(var index in data){
+							if(data[index].low > 0 || data[index].high > 0 || data[index].open > 0 ||  data[index].close > 0){
+								this.candlestickDataRefresh.push([data[index].endOfCurrentCandleTime, data[index].low, data[index].open, data[index].close, data[index].high]);
+							}
+						}
+						this.drawGraph(this.candlestickOptions,this.chartType,this.candlestickDataRefresh,this._element)
+					}
+				},
 				err => { console.log('error:', err); }
 			);
   }
