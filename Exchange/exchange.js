@@ -1,6 +1,20 @@
 var async = require('async');
 var spawn = require('child_process').spawn;
 var child = spawn('node', ['../DB/orderLog.js']);  
+var orderLog = require('../DB/orderLog.js');
+var events = require('./eventEmitter.js');
+
+var avgOps = 0;
+var orderCount = 0;
+var matchedTrades = 0;
+var startTime = 0;
+var lastTraded = null;
+
+// Asks: willing to sell currency1 for currency2
+var asks = [];
+// Bids: willing to buy currency1 with currency2
+var bids = [];
+
 
 var config = {
   currency1: {
@@ -25,22 +39,6 @@ child.stdout.setEncoding('utf8');
 child.stdout.on('data', function(data){
   console.log('Child response:', data);
 });
-var orderLog = require('../DB/orderLog.js');
-
-var events = require('./eventEmitter.js');
-
-var avgOps = 0;
-
-var orderCount = 0;
-var matchedTrades = 0;
-var startTime = 0;
-
-// Asks: willing to sell currency1 for currency2
-var asks = [];
-// Bids: willing to buy currency1 with currency2
-var bids = [];
-
-var lastTraded = null;
 
 function getLastTrade(cb){
   if(lastTraded){
@@ -336,10 +334,6 @@ function getIndex(startIndex, endIndex, array, order, direction){
     return null;
   }
 }
-
-events.on('displayOrderBook', function(){
-  displayOrderBook();
-});
 
 function displayOrderBook(){
   console.log();
