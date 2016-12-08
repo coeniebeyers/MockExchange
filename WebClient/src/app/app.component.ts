@@ -2,14 +2,17 @@ import {Component, OnInit } from '@angular/core';
 import {GoogleChartComponent} from './google-chart/google-chart.component';
 import {Http, Response, Headers, RequestOptions } from "@angular/http";
 import {Observable} from 'rxjs/Rx';
+import {GraphService} from './graph.service.ts';
 import 'rxjs/add/operator/map';
 
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css']
+  styleUrls: ['./app.component.css'],
+  providers: [GraphService]
 })
+
 export class AppComponent {
 
   private asks = [];
@@ -19,11 +22,13 @@ export class AppComponent {
   private timeInterval = '5 minute';
 
   constructor(
-    private http: Http
+    private http: Http,
+    private graphService: GraphService
     ) {
   }
 
   ngOnInit() {
+		this.graphService.setConfigValue("timeInterval", this.timeInterval);
     this.fetchData();
     setInterval(() =>{
       this.fetchData();
@@ -73,7 +78,6 @@ export class AppComponent {
   }
 
   updateTimeInterval(){
-    console.log('change time interval', this.timeInterval);
     let headers = new Headers({ 'Content-Type': 'application/json' });
     let options = new RequestOptions({ headers: headers });
     let body = JSON.stringify({
@@ -85,6 +89,7 @@ export class AppComponent {
       .subscribe(
         data => {
           console.log('response: ', data);
+					this.graphService.setConfigValue("timeInterval", this.timeInterval);
         },
         err => { 
           console.log(err.Message);
