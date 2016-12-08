@@ -14,12 +14,11 @@ import 'rxjs/add/operator/map';
 })
 
 export class AppComponent {
-
   private asks = [];
   private bids = [];
   private lastTradePrice = 0.00;
   private lastTradeAmount = 0.00;
-  private timeInterval = '5 minute';
+  private timeInterval = '1 minute';
 
   constructor(
     private http: Http,
@@ -77,18 +76,17 @@ export class AppComponent {
     this.getLastTrade(headers, options);
   }
 
-  updateTimeInterval(){
+  updateTimeInterval(timeInterval){
+		this.timeInterval = timeInterval;
     let headers = new Headers({ 'Content-Type': 'application/json' });
     let options = new RequestOptions({ headers: headers });
     let body = JSON.stringify({
       'timeInterval' : this.timeInterval
     });
-    console.log('body:', body);
     this.http.post('http://localhost:3032/updateTimeInterval', body, options)
       .map(response => response.json())
       .subscribe(
         data => {
-          console.log('response: ', data);
 					this.graphService.setConfigValue("timeInterval", this.timeInterval);
         },
         err => { 

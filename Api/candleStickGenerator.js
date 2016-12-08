@@ -112,24 +112,32 @@ function getCandleStickData(interval, cb){
   var candleSize = 60000;
   var lastBucketParameters = {noSecondsToQuery: noSecondsToQuery, endOfSecondLastCandlestick: endOfSecondLastCandlestick, candleSize: candleSize};
   switch(interval.toLowerCase()) {
-    case 'day'    :  {
-      lastBucketParameters = setLastBucketParameters(60*24, candleSize, endOfSecondLastCandlestick);
+    case '1 minute' :  {
+      lastBucketParameters = setLastBucketParameters(1, candleSize, endOfSecondLastCandlestick);
       break;
     }
-    case 'hour'   :  {
-      lastBucketParameters = setLastBucketParameters(60, candleSize, endOfSecondLastCandlestick);
-      break;
-    }
-    case '5 minute' :  {
+    case '5 minutes' :  {
       lastBucketParameters = setLastBucketParameters(5, candleSize, endOfSecondLastCandlestick);
       break;
     }
-    case '15 minute' :  {
+    case '15 minutes' :  {
       lastBucketParameters = setLastBucketParameters(15, candleSize, endOfSecondLastCandlestick);
       break;
     }
-    case '1 minute' :  {
-      lastBucketParameters = setLastBucketParameters(1, candleSize, endOfSecondLastCandlestick);
+    case '30 minutes' :  {
+      lastBucketParameters = setLastBucketParameters(30, candleSize, endOfSecondLastCandlestick);
+      break;
+    }
+    case '1 hour'   :  {
+      lastBucketParameters = setLastBucketParameters(60, candleSize, endOfSecondLastCandlestick);
+      break;
+    }
+    case '2 hours'   :  {
+      lastBucketParameters = setLastBucketParameters(120, candleSize, endOfSecondLastCandlestick);
+      break;
+    }
+    case '1 day'    :  {
+      lastBucketParameters = setLastBucketParameters(60*24, candleSize, endOfSecondLastCandlestick);
       break;
     }
     default       :  {
