@@ -38,7 +38,7 @@ app.get('/getStats', function (req, res) {
 app.get('/submitOrder', function (req, res) {
   var order = {
     timestamp: Number(req.query.timestamp),
-    id: Number(req.query.id),
+    id: req.query.id,
     accountId: req.query.accountId,
     type: req.query.type,
     price: Number(req.query.price),

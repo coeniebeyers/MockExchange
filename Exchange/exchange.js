@@ -28,7 +28,6 @@ child.stdout.on('data', function(data){
 var orderLog = require('../DB/orderLog.js');
 
 var events = require('./eventEmitter.js');
-var uuid = require('uuid');
 
 var avgOps = 0;
 
@@ -309,7 +308,7 @@ function getIndex(startIndex, endIndex, array, order, direction){
     } else if(array[middleIndex].id == order.id){
       return middleIndex;
     } else {
-      console.log('1) Not found:', order);
+      //console.log('1) Not found:', order);
       return null;
     }
   } else if(direction == 'desc' && array[middleIndex].price < order.price){ // bids
@@ -333,7 +332,7 @@ function getIndex(startIndex, endIndex, array, order, direction){
       i++;
       j++;
     }
-    console.log('2) Not found:', order);
+    //console.log('2) Not found:', order);
     return null;
   }
 }
@@ -444,11 +443,11 @@ function auditTotals(){
   var diffCurrency1 = Math.abs(totalCurrency1 - totalDeposited1);
   var diffCurrency2 = Math.abs(totalCurrency2 - totalDeposited2);
 
+  /*
   if(Number(diffCurrency1) > 0 || Number(diffCurrency2) > 0){
-    /*
     console.log('ERROR: Audited totals: '+'\nBTC: '+totalCurrency1+'\nUSD: '+totalCurrency2);
-    */
   }
+  */
 }
 
 var accountList = [];
