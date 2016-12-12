@@ -76,4 +76,44 @@ describe('exchange', function() {
       });
     });
   });
+  it('should be able to add a few asks', function(done) {
+    exchange.SubmitNewOrderForMatching(mockOrders[4], function(res){
+    exchange.SubmitNewOrderForMatching(mockOrders[5], function(res){
+    exchange.SubmitNewOrderForMatching(mockOrders[6], function(res){
+      expect(res.submitted).to.equal(true);
+      exchange.GetBidsAndAsks(10, function(bidsAndAsks){
+        expect(bidsAndAsks.bids.length).to.be(1);
+        expect(bidsAndAsks.asks.length).to.be(4);
+        done();
+      });
+    });
+    });
+    });
+  });
+  it('one bid should be able to partially take two asks', function(done) {
+    exchange.SubmitNewOrderForMatching(mockOrders[7], function(res){
+      expect(res.submitted).to.equal(true);
+      exchange.GetBidsAndAsks(10, function(bidsAndAsks){
+        expect(bidsAndAsks.bids.length).to.be(1);
+        expect(bidsAndAsks.asks.length).to.be(3);
+        expect(bidsAndAsks.asks[0].id).to.equal('4e374324-c050-11e6-992a-730712547a2a');
+        expect(Number(bidsAndAsks.bids[0].amount)).to.equal(10);
+        done();
+      });
+    });
+  });
+  it('a bid should be able to be partially fulfilled', function(done) {
+    exchange.SubmitNewOrderForMatching(mockOrders[8], function(res){
+      expect(res.submitted).to.equal(true);
+      exchange.GetBidsAndAsks(10, function(bidsAndAsks){
+        expect(bidsAndAsks.bids.length).to.be(2);
+        expect(bidsAndAsks.asks.length).to.be(2);
+        expect(bidsAndAsks.bids[0].id).to.equal('4e374328-c050-11e6-992a-730712547a2a');
+        expect(bidsAndAsks.asks[0].id).to.equal('4e374325-c050-11e6-992a-730712547a2a');
+        expect(Number(bidsAndAsks.bids[0].amount)).to.equal(40);
+        expect(Number(bidsAndAsks.asks[0].amount)).to.equal(50);
+        done();
+      });
+    });
+  });
 });
