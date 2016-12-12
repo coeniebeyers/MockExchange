@@ -1,7 +1,7 @@
 var async = require('async');
-var spawn = require('child_process').spawn;
-var child = spawn('node', ['../DB/orderLog.js']);  
+//var spawn = require('child_process').spawn;
 var orderLog = require('../DB/orderLog.js');
+//var child = spawn('node', ['../DB/orderLog.js']);  
 var events = require('./eventEmitter.js');
 var accounts = require('./accountManagement.js');
 var config = require('../config.js');
@@ -18,7 +18,7 @@ var asks = [];
 // Bids: willing to buy currency1 with currency2
 var bids = [];
 
-child.stderr.on('data', function(data){
+/*child.stderr.on('data', function(data){
   console.log('err data:');
   console.log(data.toString());
   console.log('end of err data');
@@ -27,7 +27,7 @@ child.stderr.on('data', function(data){
 child.stdout.setEncoding('utf8');
 child.stdout.on('data', function(data){
   console.log('Child response:', data);
-});
+});*/
 
 function getLastTrade(cb){
   if(lastTraded){
@@ -76,105 +76,114 @@ events.on('newOrder', function(order){
   avgOps = orderCount/elapsedStartTime; 
 
   updateOrderBook(order);
+  accounts.UpdateReserveAmounts(order);
 });
+
+function handleBid(order){
+  order.amount = util.Round(order.amount, config.currency1.constant);
+  // No matching asks
+  if((asks.length == 0)||(asks.length > 0 && order.price < asks[0].price)){ 
+    if(bids.length == 0 || order.price > bids[0].price){ // Update first element in list
+      bids.splice(0, 0, order);
+    } else {
+      var i = getPosition(0, bids.length-1, bids, order, 'desc');
+      bids.splice(i, 0, order);
+    }
+  } else { // This bid matches with an ask
+    if(asks[0].amount > order.amount){
+      var match = {
+        order1: asks[0],
+        order2: order,
+        amount: order.amount
+      };
+      events.emit('matched', match);
+      asks[0].amount -= order.amount;
+      asks[0].amount = util.Round(asks[0].amount, config.currency1.constant);
+      events.emit('matchExecuted', match);
+      events.emit('orderExecuted', order);
+    } else if (asks[0].amount == order.amount) { 
+      var match = {
+        order1: asks[0],
+        order2: order,
+        amount: order.amount
+      };
+      events.emit('matched', match);
+      asks.splice(0, 1);
+      events.emit('matchExecuted', match);
+      events.emit('orderExecuted', order);
+    } else {
+      var match = {
+        order1: asks[0],
+        order2: order,
+        amount: asks[0].amount
+      };
+      events.emit('matched', match);
+      var newOrder = Object.assign({}, order); 
+      newOrder.amount -= asks[0].amount;
+      newOrder.amount = util.Round(newOrder.amount, config.currency1.constant);
+      newOrder.parentOrder = order;
+      asks.splice(0, 1);
+      events.emit('matchExecuted', match);
+      updateOrderBook(newOrder);
+    }
+  }
+}
+
+function handleAsk(order){
+  order.amount = util.Round(order.amount, config.currency1.constant);
+  // No matching bids
+  if((bids.length == 0)||(bids.length > 0 && order.price > bids[0].price)){
+    if(asks.length == 0 || order.price < asks[0].price){ // Update first element in list
+      asks.splice(0, 0, order);
+    } else {
+      var i = getPosition(0, asks.length-1, asks, order, 'asc');
+      asks.splice(i, 0, order);
+    }
+  } else { // This ask matches with a bid
+    if(bids[0].amount > order.amount){
+      var match = {
+        order1: bids[0],
+        order2: order,
+        amount: order.amount
+      };
+      events.emit('matched', match);
+      bids[0].amount -= order.amount;
+      bids[0].amount = util.Round(bids[0].amount, config.currency1.constant);
+      events.emit('matchExecuted', match);
+      events.emit('orderExecuted', order);
+    } else if (bids[0].amount == order.amount){
+      var match = {
+        order1: bids[0],
+        order2: order,
+        amount: order.amount
+      };
+      events.emit('matched', match);
+      bids.splice(0, 1);
+      events.emit('matchExecuted', match);
+      events.emit('orderExecuted', order);
+    } else {
+      var match = {
+        order1: bids[0],
+        order2: order,
+        amount: bids[0].amount
+      };
+      events.emit('matched', match);
+      var newOrder = Object.assign({}, order); 
+      newOrder.amount -= bids[0].amount;
+      newOrder.amount = util.Round(newOrder.amount, config.currency1.constant);
+      newOrder.parentOrder = order;
+      bids.splice(0, 1);
+      events.emit('matchExecuted', match);
+      updateOrderBook(newOrder);
+    }
+  }
+}
 
 function updateOrderBook(order){
   if(order.type == 'bid'){
-    order.amount = util.Round(order.amount, config.currency1.constant);
-    // No matching asks
-    if((asks.length == 0)||(asks.length > 0 && order.price < asks[0].price)){ 
-      if(bids.length == 0 || order.price > bids[0].price){ // Update first element in list
-        bids.splice(0, 0, order);
-      } else {
-        var i = getPosition(0, bids.length-1, bids, order, 'desc');
-        bids.splice(i, 0, order);
-      }
-    } else { // This bid matches with an ask
-      if(asks[0].amount > order.amount){
-        var match = {
-          order1: asks[0],
-          order2: order,
-          amount: order.amount
-        };
-        events.emit('matched', match);
-        asks[0].amount -= order.amount;
-        asks[0].amount = util.Round(asks[0].amount, config.currency1.constant);
-        events.emit('matchExecuted', match);
-        events.emit('orderExecuted', order);
-      } else if (asks[0].amount == order.amount) { 
-        var match = {
-          order1: asks[0],
-          order2: order,
-          amount: order.amount
-        };
-        events.emit('matched', match);
-        asks.splice(0, 1);
-        events.emit('matchExecuted', match);
-        events.emit('orderExecuted', order);
-      } else {
-        var match = {
-          order1: asks[0],
-          order2: order,
-          amount: asks[0].amount
-        };
-        events.emit('matched', match);
-        var newOrder = Object.assign({}, order); 
-        newOrder.amount -= asks[0].amount;
-        newOrder.amount = util.Round(newOrder.amount, config.currency1.constant);
-        newOrder.parentOrder = order;
-        asks.splice(0, 1);
-        events.emit('matchExecuted', match);
-        updateOrderBook(newOrder);
-      }
-    }
+    handleBid(order);
   } else if(order.type == 'ask'){ // order.type ask
-    order.amount = util.Round(order.amount, config.currency1.constant);
-    // No matching bids
-    if((bids.length == 0)||(bids.length > 0 && order.price > bids[0].price)){
-      if(asks.length == 0 || order.price < asks[0].price){ // Update first element in list
-        asks.splice(0, 0, order);
-      } else {
-        var i = getPosition(0, asks.length-1, asks, order, 'asc');
-        asks.splice(i, 0, order);
-      }
-    } else { // This ask matches with a bid
-      if(bids[0].amount > order.amount){
-        var match = {
-          order1: bids[0],
-          order2: order,
-          amount: order.amount
-        };
-        events.emit('matched', match);
-        bids[0].amount -= order.amount;
-        bids[0].amount = util.Round(bids[0].amount, config.currency1.constant);
-        events.emit('matchExecuted', match);
-        events.emit('orderExecuted', order);
-      } else if (bids[0].amount == order.amount){
-        var match = {
-          order1: bids[0],
-          order2: order,
-          amount: order.amount
-        };
-        events.emit('matched', match);
-        bids.splice(0, 1);
-        events.emit('matchExecuted', match);
-        events.emit('orderExecuted', order);
-      } else {
-        var match = {
-          order1: bids[0],
-          order2: order,
-          amount: bids[0].amount
-        };
-        events.emit('matched', match);
-        var newOrder = Object.assign({}, order); 
-        newOrder.amount -= bids[0].amount;
-        newOrder.amount = util.Round(newOrder.amount, config.currency1.constant);
-        newOrder.parentOrder = order;
-        bids.splice(0, 1);
-        events.emit('matchExecuted', match);
-        updateOrderBook(newOrder);
-      }
-    }
+    handleAsk(order);
   } else if(order.type == 'cancelbid'){
     var i = getIndex(0, bids.length-1, bids, order, 'desc');
     if(i !== null){
@@ -281,19 +290,16 @@ function getIndex(startIndex, endIndex, array, order, direction){
   }
 }
 
-events.on('newOrder', function(order){
-  accounts.UpdateReserveAmounts(order);
-});
-
 events.on('matched', function(match){
   //auditTotals();
 });
 
 // This hands the logging of matched order to the child thread
 events.on('matchExecuted', function(match){
-  child.stdin.write('\n'); 
+  /*child.stdin.write('\n'); 
   child.stdin.write(JSON.stringify(match)); 
-  child.stdin.write('\n');
+  child.stdin.write('\n');*/
+  orderLog.AddLog(match);
 });
 
 events.on('matchExecuted', function(match){
@@ -317,18 +323,6 @@ events.on('matchExecuted', function(match){
   };
 });
 
-// Assume just one currency pair right now, BTCUSD
-  // TODO: this needs to move to a place where account balances are checked before the order is 
-  // allowed on the orderbook
-  /*if(order.type == 'ask' && order.amount > (account.currency1 - account.reservedCurrency1)){
-    cb(null); 
-  } else if(order.type == 'bid' 
-      && (order.amount*order.price) > (account.currency2 - account.reservedCurrency2)){
-    cb(null)
-  } else {
-    cb(order);
-  }*/
-
 function startExchangeSimulation(){
 
   setInterval(function(){
@@ -342,16 +336,36 @@ function startExchangeSimulation(){
     startTime = new Date().getTime();
   }
 
-  accounts.CreateAccounts();
+  accounts.CreateAccount();
 }
 
+// Assume just one currency pair right now, BTCUSD
 function submitNewOrderForMatching(newOrderFromUI, cb){
+  // TODO: this needs to move to a place where account balances are checked before the order is 
+  // allowed on the orderbook
+  /*if(order.type == 'ask' && order.amount > (account.currency1 - account.reservedCurrency1)){
+    cb(null); 
+  } else if(order.type == 'bid' 
+      && (order.amount*order.price) > (account.currency2 - account.reservedCurrency2)){
+    cb(null)
+  } else {
+    cb(order);
+  }*/
   events.emit('newOrder', newOrderFromUI);
   cb({submitted: true});
 }
 
-exports.SubmitNewOrderForMatching = submitNewOrderForMatching;
-exports.StartExchangeSimulation = startExchangeSimulation;
-exports.GetStats = getStats;
-exports.GetBidsAndAsks = getBidsAndAsks;
-exports.GetLastTrade = getLastTrade;
+module.exports = function(orderLog_){
+  var module = {};
+  if(orderLog_){
+    orderLog = orderLog_;
+  }
+  
+  module.SubmitNewOrderForMatching = submitNewOrderForMatching;
+  module.StartExchangeSimulation = startExchangeSimulation;
+  module.GetStats = getStats;
+  module.GetBidsAndAsks = getBidsAndAsks;
+  module.GetLastTrade = getLastTrade;
+  return module;
+};
+

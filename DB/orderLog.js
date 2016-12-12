@@ -37,14 +37,18 @@ function addLog(order, cb){
   if(!db){
     connectToDB(function(){
       addLog(order, function(res){
-        cb(res);
+        if(cb){
+          cb(res);
+        }
       });
     });
   } else {
     order._id = order.id;
     db.orderLog.insert(order, function(err, docs){
       logError(err);
-      cb(docs);
+      if(cb){
+        cb(docs);
+      }
     });
   }
 }
