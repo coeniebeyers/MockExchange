@@ -175,7 +175,20 @@ function createAccounts(){
   }
 }
 
+function createAccount(){
+  var newAccount = {
+    currency1: 0,
+    reservedCurrency1: 0,
+    currency2: 0,
+    reservedCurrency2: 0,
+    id: accountList.length 
+  };
+  accountList.push(newAccount);
+  return accountList[newAccount.id];
+}
+
 exports.CreateAccounts = createAccounts;
+exports.CreateAccount = createAccount;
 exports.AuditTotals = auditTotals;
 exports.AuditOrdersToReservedBalances = auditOrdersToReservedBalances;
 exports.UpdateReserveAmounts = updateReserveAmounts;
