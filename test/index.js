@@ -1,13 +1,13 @@
 var uuid = require('uuid');
 var expect = require('expect.js');
-var exchange = require('../Exchange/exchange.js');
-var accountManagement = require('../Exchange/accountManagement.js');
 var orderLog = require('./orderLog.js');
+var exchange = require('../Exchange/exchange.js')(orderLog);
+var accountManagement = require('../Exchange/accountManagement.js');
 
 var account = null;
 
 describe('exchange', function() {
-  exchange.SetOrderLog(orderLog);
+  //exchange.SetOrderLog(orderLog);
   it('should be able to add an account', function(done){
     account = accountManagement.CreateAccounts();
     done();

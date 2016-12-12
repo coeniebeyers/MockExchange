@@ -1,7 +1,7 @@
 var async = require('async');
-var spawn = require('child_process').spawn;
+//var spawn = require('child_process').spawn;
 var orderLog = require('../DB/orderLog.js');
-var child = spawn('node', ['../DB/orderLog.js']);  
+//var child = spawn('node', ['../DB/orderLog.js']);  
 var events = require('./eventEmitter.js');
 var accounts = require('./accountManagement.js');
 var config = require('../config.js');
@@ -28,10 +28,6 @@ child.stdout.setEncoding('utf8');
 child.stdout.on('data', function(data){
   console.log('Child response:', data);
 });*/
-
-function setOrderLog(_orderLog){
-  orderLog = _orderLog;
-}
 
 function getLastTrade(cb){
   if(lastTraded){
@@ -359,9 +355,17 @@ function submitNewOrderForMatching(newOrderFromUI, cb){
   cb({submitted: true});
 }
 
-exports.SubmitNewOrderForMatching = submitNewOrderForMatching;
-exports.StartExchangeSimulation = startExchangeSimulation;
-exports.GetStats = getStats;
-exports.GetBidsAndAsks = getBidsAndAsks;
-exports.GetLastTrade = getLastTrade;
-exports.SetOrderLog = setOrderLog;
+module.exports = function(orderLog_){
+  var module = {};
+  if(orderLog_){
+    orderLog = orderLog_;
+  }
+  
+  module.SubmitNewOrderForMatching = submitNewOrderForMatching;
+  module.StartExchangeSimulation = startExchangeSimulation;
+  module.GetStats = getStats;
+  module.GetBidsAndAsks = getBidsAndAsks;
+  module.GetLastTrade = getLastTrade;
+  return module;
+};
+
