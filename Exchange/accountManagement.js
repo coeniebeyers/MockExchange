@@ -77,7 +77,7 @@ function updateAccountBalances(match){
 }
 
 function auditTotals(){
-  var totalCurrency1 = 0;
+  /*var totalCurrency1 = 0;
   var totalCurrency2 = 0;
   for(var i=accountList.length; i--;){
     totalCurrency1 += accountList[i].currency1;
@@ -91,7 +91,7 @@ function auditTotals(){
   var diffCurrency1 = Math.abs(totalCurrency1 - totalDeposited1);
   var diffCurrency2 = Math.abs(totalCurrency2 - totalDeposited2);
 
-  /*
+  
   if(Number(diffCurrency1) > 0 || Number(diffCurrency2) > 0){
     console.log('ERROR: Audited totals: '+'\nBTC: '+totalCurrency1+'\nUSD: '+totalCurrency2);
   }
@@ -160,21 +160,6 @@ function auditOrdersToReservedBalances(bidsAndAsks){
   }
 }
 
-var accountList = [];
-var accountBalance = 100;
-
-function createAccounts(){
-  for(var i = 0; i < 10000; i++){
-    accountList.push({
-      currency1: accountBalance,
-      reservedCurrency1: 0,
-      currency2: accountBalance,
-      reservedCurrency2: 0,
-      id: i 
-    });
-  }
-}
-
 function createAccount(){
   var newAccount = {
     currency1: 0,
@@ -187,7 +172,6 @@ function createAccount(){
   return accountList[newAccount.id];
 }
 
-exports.CreateAccounts = createAccounts;
 exports.CreateAccount = createAccount;
 exports.AuditTotals = auditTotals;
 exports.AuditOrdersToReservedBalances = auditOrdersToReservedBalances;

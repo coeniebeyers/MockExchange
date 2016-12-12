@@ -336,7 +336,7 @@ function startExchangeSimulation(){
     startTime = new Date().getTime();
   }
 
-  accounts.CreateAccounts();
+  accounts.CreateAccount();
 }
 
 // Assume just one currency pair right now, BTCUSD
