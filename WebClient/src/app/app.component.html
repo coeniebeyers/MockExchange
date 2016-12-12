@@ -4,7 +4,27 @@
 
 <div class="container-fluid" style="background-color: #151515; color: white">
   <div class="row">
-    <div class="col-md-12"><input style="background-color: #151515" [(ngModel)]="timeInterval" (ngModelChange)="updateTimeInterval()"></div>
+    <div class="col-md-12">
+			<h4>
+				Candlestick bucket interval&nbsp;&nbsp; 
+				<div class="btn-group" dropdown>
+					<button id="split-button" type="button" class="btn btn-default">{{timeInterval}}</button>
+					<button type="button" class="btn btn-default dropdown-toggle-split" dropdownToggle>
+						<span class="caret"></span>
+						<span class="sr-only">Split button!</span>
+					</button>
+					<ul class="dropdown-menu" dropdownMenu role="menu" aria-labelledby="split-button">
+						<li role="menuitem"><a class="dropdown-item" href="#" (click)="updateTimeInterval('1 minute')">1 minute</a></li>
+						<li role="menuitem"><a class="dropdown-item" href="#" (click)="updateTimeInterval('5 minutes')">5 minutes</a></li>
+						<li role="menuitem"><a class="dropdown-item" href="#" (click)="updateTimeInterval('15 minutes')">15 minutes</a></li>
+						<li role="menuitem"><a class="dropdown-item" href="#" (click)="updateTimeInterval('30 minutes')">30 minutes</a></li>
+						<li role="menuitem"><a class="dropdown-item" href="#" (click)="updateTimeInterval('1 hour')">1 hour</a></li>
+						<li role="menuitem"><a class="dropdown-item" href="#" (click)="updateTimeInterval('2 hours')">2 hours</a></li>
+						<li role="menuitem"><a class="dropdown-item" href="#" (click)="updateTimeInterval('1 day')">1 day</a></li>
+					</ul>
+				</div>
+			</h4>
+		</div>
   </div>
 	<div class="row">
 		<div class="col-md-10" id="candlestick_chart" [chartData]="candlestickData" [chartOptions] = "candlestickOptions" chartType="CandlestickChart" GoogleChart >
