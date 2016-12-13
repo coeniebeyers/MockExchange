@@ -1,7 +1,11 @@
 var express = require('express');
 var bodyParser = require('body-parser');
 var app = express();
-var exchange = require('./exchange.js')();
+var orderLog = require('../DB/orderLog.js');
+var exchangeModules = {
+  orderLog: orderLog
+};
+var exchange = require('./exchange.js')(exchangeModules);
 
 app.use(function (req, res, next) {
   res.setHeader('Access-Control-Allow-Origin', 'http://localhost:4200');
