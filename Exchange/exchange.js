@@ -1,6 +1,5 @@
 var async = require('async');
 //var spawn = require('child_process').spawn;
-var orderLog = require('../DB/orderLog.js');
 //var child = spawn('node', ['../DB/orderLog.js']);  
 var events = require('./eventEmitter.js');
 var accounts = require('./accountManagement.js');
@@ -355,17 +354,16 @@ function submitNewOrderForMatching(newOrderFromUI, cb){
   cb({submitted: true});
 }
 
-module.exports = function(orderLog_){
-  var module = {};
-  if(orderLog_){
-    orderLog = orderLog_;
-  }
+module.exports = function(modules){
+  var functions = {};
+
+  orderLog = modules.orderLog;
   
-  module.SubmitNewOrderForMatching = submitNewOrderForMatching;
-  module.StartExchangeSimulation = startExchangeSimulation;
-  module.GetStats = getStats;
-  module.GetBidsAndAsks = getBidsAndAsks;
-  module.GetLastTrade = getLastTrade;
-  return module;
+  functions.SubmitNewOrderForMatching = submitNewOrderForMatching;
+  functions.StartExchangeSimulation = startExchangeSimulation;
+  functions.GetStats = getStats;
+  functions.GetBidsAndAsks = getBidsAndAsks;
+  functions.GetLastTrade = getLastTrade;
+  return functions;
 };
 

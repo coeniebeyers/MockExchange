@@ -1,8 +1,11 @@
 var uuid = require('uuid');
 var expect = require('expect.js');
-var orderLog = require('./orderLog.js');
-var exchange = require('../Exchange/exchange.js')(orderLog);
 var accountManagement = require('../Exchange/accountManagement.js');
+var orderLog = require('../DB/InMemory/orderLog.js');
+var testModules = {
+  orderLog: orderLog
+};
+var exchange = require('../Exchange/exchange.js')(testModules);
 var mockOrders = require('./fixtures/orders.js').MockOrders;
 
 var account = null;
