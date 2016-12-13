@@ -28,7 +28,7 @@ export class GoogleChartComponent implements OnInit {
 	public candlestickOptions = {
 		legend: 'none',
     chartArea: {'width': '85%', 'height': '75%'},
-		height: 800,
+		height: 700,
     backgroundColor : '#101010',
 		colors: ['#aaaaaa'],
 		vAxis: { 
