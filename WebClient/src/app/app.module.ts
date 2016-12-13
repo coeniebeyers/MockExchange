@@ -5,6 +5,7 @@ import { HttpModule } from '@angular/http';
 import { AppComponent } from './app.component';
 import { GoogleChartComponent } from './google-chart/google-chart.component';
 import { DropdownModule } from 'ng2-bootstrap/ng2-bootstrap';
+import { ModalModule } from 'ng2-bootstrap/ng2-bootstrap';
 
 @NgModule({
   declarations: [
@@ -15,7 +16,8 @@ import { DropdownModule } from 'ng2-bootstrap/ng2-bootstrap';
     BrowserModule,
     FormsModule,
     HttpModule,
-    DropdownModule
+    DropdownModule,
+    ModalModule
   ],
   providers: [ 
   ],

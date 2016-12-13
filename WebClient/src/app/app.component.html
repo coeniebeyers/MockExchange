@@ -1,13 +1,16 @@
 <div class="container-fluid" style="background-color: #151515; color: white">
-  <div class="row">
+  <div class="row" style="background-color: #222222;">
     <div class="col-md-11">
       <h1>
         <span [innerHTML]="title"></span>
       </h1>
     </div>
-    <div class="col-md-1">
-      <button type="button" class="btn btn-primary">
-        <span class="glyphicon glyphicon-log-in"></span>&nbsp;login
+    <div class="col-md-1" style="padding: 21px 8px 21px 8px;">
+      <button *ngIf="isLoggedOut" type="button" class="btn btn-default" (click)="lgModal.show()">
+        <span class="glyphicon glyphicon-log-in"></span>&nbsp;&nbsp;login
+      </button>
+      <button *ngIf="isLoggedIn" type="button" class="btn btn-primary" (click)="logOut()">
+        <span class="glyphicon glyphicon-log-out"></span>&nbsp;&nbsp;logout
       </button>
     </div>
   </div>
@@ -36,7 +39,7 @@
 		</div>
   </div>
 	<div class="row">
-		<div class="col-md-9" id="candlestick_chart" [chartData]="candlestickData" [chartOptions] = "candlestickOptions" chartType="CandlestickChart" GoogleChart >
+		<div class="col-md-11" id="candlestick_chart" [chartData]="candlestickData" [chartOptions] = "candlestickOptions" chartType="CandlestickChart" GoogleChart >
     </div>
 		<div class="col-md-1">
       <b>Order book</b>
@@ -75,31 +78,43 @@
         </table>
       </div>
     </div>
-		<div class="col-md-2">
-      <b>Login</b>
-      <br />
-      <br />
-      <table>
-        <tr>
-          <td style="border: 1px solid gray; padding: 8px 8px 8px 8px;">Email</td>
-          <td style="border: 1px solid gray; padding: 8px 8px 8px 8px;">
-            <input type="email" class="form-control" id="exampleInputEmail1" placeholder="Email">
-          </td>
-        </tr>
-        <tr>
-          <td style="border: 1px solid gray; padding: 8px 8px 8px 8px;">Password</td>
-          <td style="border: 1px solid gray; padding: 8px 8px 8px 8px;">
-            <input type="password" class="form-control" id="exampleInputPassword" placeholder="Password">
-          </td>
-        </tr>
-        <tr>
-          <td style="padding: 8px 8px 8px 8px;">&nbsp;</td>
-          <td style="padding: 8px 8px 8px 8px;">
-            <button type="button" class="btn btn-primary">Login</button>
-          </td>
-        </tr>
-
-      </table>
-    </div>
 	</div>
 </div>
+
+
+<div bsModal #lgModal="bs-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="loginLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" (click)="lgModal.hide()" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <h4 class="modal-title">Login</h4>
+      </div>
+      <div class="modal-body">
+				<table>
+					<tr>
+						<td style="padding: 8px 8px 8px 8px;">Email</td>
+						<td style="padding: 8px 8px 8px 8px;">
+							<input type="email" class="form-control" id="exampleInputEmail1" placeholder="Email">
+						</td>
+					</tr>
+					<tr>
+						<td style="padding: 8px 8px 8px 8px;">Password</td>
+						<td style="padding: 8px 8px 8px 8px;">
+							<input type="password" class="form-control" id="exampleInputPassword" placeholder="Password">
+						</td>
+					</tr>
+					<tr>
+						<td style="padding: 8px 8px 8px 8px;">&nbsp;</td>
+						<td style="padding: 8px 8px 8px 8px;">
+							<button type="button" class="btn btn-primary" (click)="login($event)">Login</button>
+						</td>
+					</tr>
+
+				</table>
+      </div>
+    </div>
+  </div>
+</div>
+
