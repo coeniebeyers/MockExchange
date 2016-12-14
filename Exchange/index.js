@@ -28,6 +28,12 @@ app.get('/createNewAccount', function (req, res) {
 	});
 })
 
+app.get('/getBalance', function (req, res) {
+	accounts.GetBalance(req.query.accountId, function(accountBalances){
+		res.json(accountBalances);
+	});
+})
+
 app.get('/getLastTrade', function (req, res) {
 	exchange.GetLastTrade(function(lastTrade){
 		res.json(lastTrade);
