@@ -9,7 +9,7 @@ var util = require('../util.js');
 var avgOps = 0;
 var orderCount = 0;
 var matchedTrades = 0;
-var startTime = 0;
+var startTime = new Date().getTime();
 var lastTraded = null;
 
 // Asks: willing to sell currency1 for currency2
