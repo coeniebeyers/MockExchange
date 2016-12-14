@@ -29,7 +29,7 @@ app.get('/createNewAccount', function (req, res) {
 })
 
 app.get('/getBalance', function (req, res) {
-	accounts.GetBalance(req.query.accountId, function(accountBalances){
+	accounts.GetAccountBalances(req.query.accountId, function(accountBalances){
 		res.json(accountBalances);
 	});
 })
