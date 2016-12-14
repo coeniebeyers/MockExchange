@@ -64,4 +64,3 @@ app.listen(3033, function () {
   console.log('Exchange engine is running on port 3033')
 });
 
-//exchange.StartExchangeSimulation();

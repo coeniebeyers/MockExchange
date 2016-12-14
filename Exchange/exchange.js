@@ -322,22 +322,6 @@ events.on('matchExecuted', function(match){
   };
 });
 
-function startExchangeSimulation(){
-
-  setInterval(function(){
-    console.log('---');
-    getStats(function(stats){
-      console.log(stats);
-    });
-  }, 1000);
-
-  if(startTime == 0){
-    startTime = new Date().getTime();
-  }
-
-  accounts.CreateAccount();
-}
-
 // Assume just one currency pair right now, BTCUSD
 function submitNewOrderForMatching(newOrderFromUI, cb){
   // TODO: this needs to move to a place where account balances are checked before the order is 
@@ -360,7 +344,6 @@ module.exports = function(modules){
   orderLog = modules.orderLog;
   
   functions.SubmitNewOrderForMatching = submitNewOrderForMatching;
-  functions.StartExchangeSimulation = startExchangeSimulation;
   functions.GetStats = getStats;
   functions.GetBidsAndAsks = getBidsAndAsks;
   functions.GetLastTrade = getLastTrade;
