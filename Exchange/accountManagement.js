@@ -160,7 +160,7 @@ function auditOrdersToReservedBalances(bidsAndAsks){
   }
 }
 
-function createAccount(){
+function createAccount(cb){
   var newAccount = {
     currency1: 0,
     reservedCurrency1: 0,
@@ -169,7 +169,11 @@ function createAccount(){
     id: accountList.length 
   };
   accountList.push(newAccount);
-  return accountList[newAccount.id];
+  if(cb){
+    cb(accountList[newAccount.id]);
+  } else {
+    return accountList[newAccount.id];
+  }
 }
 
 exports.CreateAccount = createAccount;
