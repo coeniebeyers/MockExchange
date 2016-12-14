@@ -1,9 +1,10 @@
-import {Component, OnInit } from '@angular/core';
+import {Component, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
 import {GoogleChartComponent} from './google-chart/google-chart.component';
 import {Http, Response, Headers, RequestOptions } from "@angular/http";
 import {Observable} from 'rxjs/Rx';
 import {GraphService} from './graph.service.ts';
 import 'rxjs/add/operator/map';
+import { ComponentsHelper } from 'ng2-bootstrap';
 
 
 @Component({
@@ -19,11 +20,19 @@ export class AppComponent {
   private lastTradePrice = 0.00;
   private lastTradeAmount = 0.00;
   private timeInterval = '1 minute';
+  private isLoggedIn = false;
+  private isLoggedOut = true;
+	private viewContainerRef: ViewContainerRef;
+
+	@ViewChild('lgModal') lgModal;
 
   constructor(
     private http: Http,
-    private graphService: GraphService
+    private graphService: GraphService,
+    private componentsHelper: ComponentsHelper, 
+    private vcr: ViewContainerRef
     ) {
+		componentsHelper.setRootViewContainerRef(vcr);
   }
 
   ngOnInit() {
@@ -94,6 +103,17 @@ export class AppComponent {
         }
       );
 
+  }
+
+  login(){
+    this.isLoggedIn = true;
+    this.isLoggedOut = false;
+		this.lgModal.hide();
+  }
+
+  logOut(){
+    this.isLoggedIn = false;
+    this.isLoggedOut = true;
   }
 
   title = 'Found<sup>e</sup>ry Crypto Exchange';
