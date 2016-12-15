@@ -1,8 +1,9 @@
 import {Component, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
 import {GoogleChartComponent} from './google-chart/google-chart.component';
+import {LoginComponent} from './login/login.component';
 import {Http, Response, Headers, RequestOptions } from "@angular/http";
 import {Observable} from 'rxjs/Rx';
-import {GraphService} from './graph.service.ts';
+import {GraphService} from './_services/graph.service.ts';
 import 'rxjs/add/operator/map';
 import { ComponentsHelper } from 'ng2-bootstrap';
 

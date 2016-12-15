@@ -1,6 +1,6 @@
 import {Component, Directive, ElementRef, Input, OnInit} from '@angular/core';
 import {Observable} from 'rxjs/Rx';
-import {GraphService} from '../graph.service.ts';
+import {GraphService} from '../_services/graph.service.ts';
 import 'rxjs/add/operator/map';
 
 declare var google:any;
