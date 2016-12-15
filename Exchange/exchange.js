@@ -9,7 +9,7 @@ var util = require('../util.js');
 var avgOps = 0;
 var orderCount = 0;
 var matchedTrades = 0;
-var startTime = 0;
+var startTime = new Date().getTime();
 var lastTraded = null;
 
 // Asks: willing to sell currency1 for currency2
@@ -303,7 +303,7 @@ events.on('matchExecuted', function(match){
 
 events.on('matchExecuted', function(match){
   accounts.UpdateAccountBalances(match);
-  //auditTotals();
+  //accounts.AuditTotals();
 });
 
 events.on('matchExecuted', function(match){
@@ -321,22 +321,6 @@ events.on('matchExecuted', function(match){
     amount: match.amount
   };
 });
-
-function startExchangeSimulation(){
-
-  setInterval(function(){
-    console.log('---');
-    getStats(function(stats){
-      console.log(stats);
-    });
-  }, 1000);
-
-  if(startTime == 0){
-    startTime = new Date().getTime();
-  }
-
-  accounts.CreateAccount();
-}
 
 // Assume just one currency pair right now, BTCUSD
 function submitNewOrderForMatching(newOrderFromUI, cb){
@@ -360,7 +344,6 @@ module.exports = function(modules){
   orderLog = modules.orderLog;
   
   functions.SubmitNewOrderForMatching = submitNewOrderForMatching;
-  functions.StartExchangeSimulation = startExchangeSimulation;
   functions.GetStats = getStats;
   functions.GetBidsAndAsks = getBidsAndAsks;
   functions.GetLastTrade = getLastTrade;

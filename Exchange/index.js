@@ -6,6 +6,7 @@ var exchangeModules = {
   orderLog: orderLog
 };
 var exchange = require('./exchange.js')(exchangeModules);
+var accounts = require('./accountManagement.js');
 
 app.use(function (req, res, next) {
   res.setHeader('Access-Control-Allow-Origin', 'http://localhost:4200');
@@ -20,6 +21,18 @@ app.use(bodyParser.urlencoded({
 }));
 
 app.use(bodyParser.json());
+
+app.get('/createNewAccount', function (req, res) {
+	accounts.CreateAccount(function(newAccount){
+		res.json(newAccount);
+	});
+})
+
+app.get('/getBalance', function (req, res) {
+	accounts.GetAccountBalances(req.query.accountId, function(accountBalances){
+		res.json(accountBalances);
+	});
+})
 
 app.get('/getLastTrade', function (req, res) {
 	exchange.GetLastTrade(function(lastTrade){
@@ -57,4 +70,3 @@ app.listen(3033, function () {
   console.log('Exchange engine is running on port 3033')
 });
 
-exchange.StartExchangeSimulation();
