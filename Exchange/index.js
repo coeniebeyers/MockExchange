@@ -34,6 +34,17 @@ app.get('/getBalance', function (req, res) {
 	});
 })
 
+app.get('/adjustBalance', function (req, res) {
+  var obj = {
+    accountId: req.query.accountId,
+    amount: req.query.amount,
+    currency: req.query.currency
+  }
+	accounts.AdjustBalance(obj, function(accountBalances){
+		res.json(accountBalances);
+	});
+})
+
 app.get('/getLastTrade', function (req, res) {
 	exchange.GetLastTrade(function(lastTrade){
 		res.json(lastTrade);
