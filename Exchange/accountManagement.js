@@ -188,6 +188,28 @@ function getAccountBalances(accountId, cb){
   }
 }
 
+function adjustAccountBalance(obj, cb){
+  var account = accountList[obj.accountId];
+  
+  if(obj.currency == config.currency1.name){
+    var adjustment = util.Round(Number(obj.amount), config.currency1.constant);
+    account.currency1 += adjustment;
+    account.reservedCurrency1 += adjustment;
+  } else if (obj.currency == config.currency2.name){
+    var adjustment = util.Round(Number(obj.amount), config.currency2.constant);
+    account.currency2 += adjustment;
+    account.reservedCurrency2 += adjustment;
+  } 
+ 
+  var balanceObj = getAccountBalances(obj.accountId);
+  if(cb){
+    cb(balanceObj);
+  } else {
+    return balanceObj;
+  }
+}
+
+exports.AdjustAccountBalance = adjustAccountBalance;
 exports.CreateAccount = createAccount;
 exports.GetAccountBalances = getAccountBalances;
 exports.AuditTotals = auditTotals;
