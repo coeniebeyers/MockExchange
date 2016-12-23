@@ -178,7 +178,9 @@ function createAccount(cb){
 
 function getAccountBalances(accountId, cb){
   var account = accountList[accountId];
-  var balanceObj = {};
+  var balanceObj = {
+    accountId: accountId
+  };
   balanceObj[config.currency1.name] = account.currency1; 
   balanceObj[config.currency2.name] = account.currency2; 
   if(cb){
