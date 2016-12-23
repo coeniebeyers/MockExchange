@@ -13,6 +13,7 @@ describe('Account', function() {
     accountManagement.GetAccountBalances(accountList[0].id, function(accountBalance){ 
       expect(accountBalance.BTC).to.equal(0);
       expect(accountBalance.USD).to.equal(0);
+      expect(accountBalance.accountId).to.equal(accountList[0].id);
       done();
     });
   });
