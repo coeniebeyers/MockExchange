@@ -10,7 +10,7 @@ var mockOrders = require('./fixtures/orders.js').MockOrders;
 
 var account = null;
 
-describe('exchange', function() {
+describe('Matching engine', function() {
   it('should be able to add an account', function(done){
     account = accountManagement.CreateAccount();
     done();
