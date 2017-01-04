@@ -4,8 +4,10 @@ var accountManagement = require('../Exchange/accountManagement.js');
 var accountList = [];
 
 describe('Account', function() {
-  it('should be able to add an account', function(done){
+  it('should be able to add accounts', function(done){
     var account = accountManagement.CreateAccount();
+    accountList.push(account);
+    account = accountManagement.CreateAccount();
     accountList.push(account);
     done();
   });
@@ -31,18 +33,76 @@ describe('Account', function() {
   });
   it('should be able to adjust USD account balances', function(done){
     var obj = {
-      accountId: accountList[0].id,
+      accountId: accountList[1].id,
       amount: 1000,
       currency: 'USD'
     };
     accountManagement.AdjustAccountBalance(obj, function(accountBalance){
-      expect(accountBalance.BTC).to.equal(100);
+      expect(accountBalance.BTC).to.equal(0);
       expect(accountBalance.USD).to.equal(obj.amount);
       done();
     });
   });
-  /*it('should be able to update account balances', function(done){
-    
+  it('should be able to update account balances on a matching ask', function(done){
+    var match = {
+      order1: {
+        timestamp: 1481536182350,
+        id: '4e374320-c050-11e6-992a-730712547a2a',
+        accountId: 0,
+        type: 'ask',
+        price: 10,
+        amount: 20 
+      },
+      order2: {
+        timestamp: 1481536182351,
+        id: '4e374323-c050-11e6-992a-730712547a2a',
+        accountId: 1,
+        type: 'bid',
+        price: 10,
+        amount: 20 },
+      amount: 20
+    };    
+    accountManagement.UpdateAccountBalances(match);
+    var balances1 = accountManagement.GetAccountBalances(accountList[0].id);
+    expect(balances1.accountId).to.be(0);
+    expect(balances1.BTC).to.be(80);
+    expect(balances1.USD).to.be(200);
+
+    var balances2 = accountManagement.GetAccountBalances(accountList[1].id);
+    expect(balances2.accountId).to.be(1);
+    expect(balances2.BTC).to.be(20);
+    expect(balances2.USD).to.be(800);
     done();
-  });*/
+  });
+  it('should be able to update account balances on a matching bid', function(done){
+    var match = {
+      order1: {
+        timestamp: 1481536182350,
+        id: '4e374320-c050-11e6-992a-730712547a2a',
+        accountId: 0,
+        type: 'bid',
+        price: 10,
+        amount: 10 
+      },
+      order2: {
+        timestamp: 1481536182351,
+        id: '4e374323-c050-11e6-992a-730712547a2a',
+        accountId: 1,
+        type: 'ask',
+        price: 10,
+        amount: 10 },
+      amount: 10
+    };    
+    accountManagement.UpdateAccountBalances(match);
+    var balances1 = accountManagement.GetAccountBalances(accountList[0].id);
+    expect(balances1.accountId).to.be(0);
+    expect(balances1.BTC).to.be(90);
+    expect(balances1.USD).to.be(100);
+
+    var balances2 = accountManagement.GetAccountBalances(accountList[1].id);
+    expect(balances2.accountId).to.be(1);
+    expect(balances2.BTC).to.be(10);
+    expect(balances2.USD).to.be(900);
+    done();
+  });
 });
