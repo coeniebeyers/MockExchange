@@ -1,44 +1,24 @@
 var config = require('../config.js');
 var util = require('../util.js');
 
-var accountList = [];
-function addToReservedCurrency1(accountId, amount){
-  var account = accountList[accountId];
-  account.reservedCurrency1 += amount;
-  account.reservedCurrency1 = util.Round(account.reservedCurrency1, config.currency1.constant);
-}
-
-function removeFromReservedCurrency1(accountId, amount){
-  addToReservedCurrency1(accountId, -1*amount); 
-}
-
-function addToReservedCurrency2(accountId, amount){
-  var account = accountList[accountId];
-  account.reservedCurrency2 += amount;
-  account.reservedCurrency2 = util.Round(account.reservedCurrency2, config.currency2.constant);
-}
-
-function removeFromReservedCurrency2(accountId, amount){
-  addToReservedCurrency2(accountId, -1*amount);
-}
+var balances = require('../DB/InMemory/accountBalances.js');
 
 function updateReserveAmountsByParams(accountId, amount, price, orderType){
-
   if(orderType == 'ask'){
-    addToReservedCurrency1(accountId, amount);
+    balances.AddToReservedCurrency1(accountId, amount);
   } else if(orderType == 'cancelask'){
-    removeFromReservedCurrency1(accountId, amount);
+    balances.RemoveFromReservedCurrency1(accountId, amount);
   } else if(orderType == 'matchedask'){
-    removeFromReservedCurrency1(accountId, amount);
+    balances.RemoveFromReservedCurrency1(accountId, amount);
   }  else if(orderType == 'bid'){
     var bidAmount = amount * price;
-    addToReservedCurrency2(accountId, bidAmount);
+    balances.AddToReservedCurrency2(accountId, bidAmount);
   } else if(orderType == 'cancelbid'){
     var bidAmount = amount * price;
-    removeFromReservedCurrency2(accountId, bidAmount);
+    balances.RemoveFromReservedCurrency2(accountId, bidAmount);
   } else if(orderType == 'matchedbid'){
     var bidAmount = amount * price;
-    removeFromReservedCurrency2(accountId, bidAmount);
+    balances.RemoveFromReservedCurrency2(accountId, bidAmount);
   } 
 }
 
@@ -51,28 +31,28 @@ function updateAccountBalances(match){
   var price = match.order1.price;
   var currency2Amount = price * currency1Amount;
   if(match.order1.type == 'ask'){
-    var account1 = accountList[match.order1.accountId];
+    var account1 = balances.AccountList[match.order1.accountId];
     account1.currency1 -= currency1Amount;
     account1.currency1 = util.Round(account1.currency1, config.currency1.constant);
     account1.currency2 += currency2Amount;
     account1.currency2 = util.Round(account1.currency2, config.currency2.constant);
     updateReserveAmountsByParams(account1.id, currency1Amount, price, 'matchedask');
 
-    var account2 = accountList[match.order2.accountId];
+    var account2 = balances.AccountList[match.order2.accountId];
     account2.currency1 += currency1Amount;
     account2.currency1 = util.Round(account2.currency1, config.currency1.constant);
     account2.currency2 -= currency2Amount;
     account2.currency2 = util.Round(account2.currency2, config.currency2.constant);
     updateReserveAmountsByParams(account2.id, currency1Amount, price, 'matchedbid');
   } else if(match.order1.type == 'bid') { 
-    var account1 = accountList[match.order1.accountId];
+    var account1 = balances.AccountList[match.order1.accountId];
     account1.currency1 += currency1Amount;
     account1.currency1 = util.Round(account1.currency1, config.currency1.constant);
     account1.currency2 -= currency2Amount;
     account1.currency2 = util.Round(account1.currency2, config.currency2.constant);
     updateReserveAmountsByParams(account1.id, currency1Amount, price, 'matchedbid');
 
-    var account2 = accountList[match.order2.accountId];
+    var account2 = balances.AccountList[match.order2.accountId];
     account2.currency1 -= currency1Amount;
     account2.currency1 = util.Round(account2.currency1, config.currency1.constant);
     account2.currency2 += currency2Amount;
@@ -142,11 +122,11 @@ function calculateOpenInterest(bidsAndAsks){
 
 function auditOrdersToReservedBalances(bidsAndAsks){
   var accountOrders = calculateOpenInterest(bidsAndAsks);
-  for(var accountId = accountList.length; accountId--;){
+  for(var accountId = balances.AccountList.length; accountId--;){
     if(accountOrders[accountId] !== undefined){
       var totalCurrency1 = accountOrders[accountId].currency1;
       var totalCurrency2 = accountOrders[accountId].currency2;
-      var account = accountList[accountId];
+      var account = balances.AccountList[accountId];
       var reservedCurrency1 = account.reservedCurrency1;
       var reservedCurrency2 = account.reservedCurrency2;
 
@@ -171,18 +151,18 @@ function createAccount(cb){
     reservedCurrency1: 0,
     currency2: 0,
     reservedCurrency2: 0,
-    id: accountList.length 
+    id: balances.AccountList.length 
   };
-  accountList.push(newAccount);
+  balances.AccountList.push(newAccount);
   if(cb){
-    cb(accountList[newAccount.id]);
+    cb(balances.AccountList[newAccount.id]);
   } else {
-    return accountList[newAccount.id];
+    return balances.AccountList[newAccount.id];
   }
 }
 
 function getAccountBalances(accountId, cb){
-  var account = accountList[accountId];
+  var account = balances.AccountList[accountId];
   var balanceObj = {
     accountId: accountId
   };
@@ -198,7 +178,7 @@ function getAccountBalances(accountId, cb){
 }
 
 function adjustAccountBalance(obj, cb){
-  var account = accountList[obj.accountId];
+  var account = balances.AccountList[obj.accountId];
   
   if(obj.currency == config.currency1.name){
     var adjustment = util.Round(Number(obj.amount), config.currency1.constant);
