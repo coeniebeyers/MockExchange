@@ -2,30 +2,43 @@ var config = require('../config.js');
 var util = require('../util.js');
 
 var accountList = [];
+function addToReservedCurrency1(accountId, amount){
+  var account = accountList[accountId];
+  account.reservedCurrency1 += amount;
+  account.reservedCurrency1 = util.Round(account.reservedCurrency1, config.currency1.constant);
+}
+
+function removeFromReservedCurrency1(accountId, amount){
+  addToReservedCurrency1(accountId, -1*amount); 
+}
+
+function addToReservedCurrency2(accountId, amount){
+  var account = accountList[accountId];
+  account.reservedCurrency2 += amount;
+  account.reservedCurrency2 = util.Round(account.reservedCurrency2, config.currency2.constant);
+}
+
+function removeFromReservedCurrency2(accountId, amount){
+  addToReservedCurrency2(accountId, -1*amount);
+}
+
 function updateReserveAmountsByParams(accountId, amount, price, orderType){
 
-  var account = accountList[accountId];
   if(orderType == 'ask'){
-    account.reservedCurrency1 += amount;
-    account.reservedCurrency1 = util.Round(account.reservedCurrency1, config.currency1.constant);
+    addToReservedCurrency1(accountId, amount);
   } else if(orderType == 'cancelask'){
-    account.reservedCurrency1 -= amount;
-    account.reservedCurrency1 = util.Round(account.reservedCurrency1, config.currency1.constant);
+    removeFromReservedCurrency1(accountId, amount);
   } else if(orderType == 'matchedask'){
-    account.reservedCurrency1 -= amount;
-    account.reservedCurrency1 = util.Round(account.reservedCurrency1, config.currency1.constant);
+    removeFromReservedCurrency1(accountId, amount);
   }  else if(orderType == 'bid'){
     var bidAmount = amount * price;
-    account.reservedCurrency2 += bidAmount;
-    account.reservedCurrency2 = util.Round(account.reservedCurrency2, config.currency2.constant);
+    addToReservedCurrency2(accountId, bidAmount);
   } else if(orderType == 'cancelbid'){
     var bidAmount = amount * price;
-    account.reservedCurrency2 -= bidAmount;
-    account.reservedCurrency2 = util.Round(account.reservedCurrency2, config.currency2.constant);
+    removeFromReservedCurrency2(accountId, bidAmount);
   } else if(orderType == 'matchedbid'){
     var bidAmount = amount * price;
-    account.reservedCurrency2 -= bidAmount;
-    account.reservedCurrency2 = util.Round(account.reservedCurrency2, config.currency2.constant);
+    removeFromReservedCurrency2(accountId, bidAmount);
   } 
 }
 
