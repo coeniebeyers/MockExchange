@@ -64,15 +64,15 @@ function updateAccountBalances(match){
 function auditTotals(){
   /*var totalCurrency1 = 0;
   var totalCurrency2 = 0;
-  for(var i=accountList.length; i--;){
-    totalCurrency1 += accountList[i].currency1;
+  for(var i=balances.AccountList.length; i--;){
+    totalCurrency1 += balances.AccountList[i].currency1;
     totalCurrency1 = util.Round(totalCurrency1, config.currency1.constant);
-    totalCurrency2 += accountList[i].currency2; 
+    totalCurrency2 += balances.AccountList[i].currency2; 
     totalCurrency2 = util.Round(totalCurrency2, config.currency2.constant);
   }  
 
-  var totalDeposited1 = accountBalance*accountList.length;
-  var totalDeposited2 = accountBalance*accountList.length;
+  var totalDeposited1 = accountBalance*balances.AccountList.length;
+  var totalDeposited2 = accountBalance*balances.AccountList.length;
   var diffCurrency1 = Math.abs(totalCurrency1 - totalDeposited1);
   var diffCurrency2 = Math.abs(totalCurrency2 - totalDeposited2);
 
