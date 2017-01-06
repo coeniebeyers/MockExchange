@@ -55,24 +55,16 @@ function updateAccountBalances(match){
     var account1 = accountList[match.order1.accountId];
     account1.currency1 += currency1Amount;
     account1.currency1 = util.Round(account1.currency1, config.currency1.constant);
-    account1.reservedCurrency1 += currency1Amount;
-    account1.reservedCurrency1 = util.Round(account1.reservedCurrency1, config.currency1.constant);
-
     account1.currency2 -= currency2Amount;
     account1.currency2 = util.Round(account1.currency2, config.currency2.constant);
-    account1.reservedCurrency2 -= currency2Amount;
-    account1.reservedCurrency2 = util.Round(account1.reservedCurrency2, config.currency2.constant);
+    updateReserveAmountsByParams(account1.id, currency1Amount, price, 'matchedbid');
 
     var account2 = accountList[match.order2.accountId];
     account2.currency1 -= currency1Amount;
     account2.currency1 = util.Round(account2.currency1, config.currency1.constant);
-    account2.reservedCurrency1 -= currency1Amount;
-    account2.reservedCurrency1 = util.Round(account2.reservedCurrency1, config.currency1.constant);
-
-    account2.reservedCurrency1 -= currency1Amount;
-    account2.reservedCurrency1 = util.Round(account2.reservedCurrency1, config.currency1.constant);
     account2.currency2 += currency2Amount;
     account2.currency2 = util.Round(account2.currency2, config.currency2.constant);
+    updateReserveAmountsByParams(account2.id, currency1Amount, price, 'matchedask');
   } 
 }
 
