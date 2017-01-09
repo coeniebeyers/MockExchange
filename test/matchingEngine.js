@@ -1,5 +1,3 @@
-
-
 var uuid = require('uuid');
 var expect = require('expect.js');
 
