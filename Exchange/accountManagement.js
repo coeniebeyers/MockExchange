@@ -1,8 +1,6 @@
 var config = require('../config.js');
 var util = require('../util.js');
 
-var balances = require('../DB/InMemory/accountBalances.js');
-
 function updateReserveAmountsByParams(accountId, amount, price, orderType){
   if(orderType == 'ask'){
     balances.AddToReservedCurrency1(accountId, amount);
@@ -193,10 +191,19 @@ function adjustAccountBalance(obj, cb){
   }
 }
 
-exports.AdjustAccountBalance = adjustAccountBalance;
-exports.CreateAccount = createAccount;
-exports.GetAccountBalances = getAccountBalances;
-exports.AuditTotals = auditTotals;
-exports.AuditOrdersToReservedBalances = auditOrdersToReservedBalances;
-exports.UpdateReserveAmounts = updateReserveAmounts;
-exports.UpdateAccountBalances = updateAccountBalances;
+module.exports = function(modules){
+
+  balances = modules.balances;
+  
+  var functions = {};
+
+  functions.AdjustAccountBalance = adjustAccountBalance;
+  functions.CreateAccount = createAccount;
+  functions.GetAccountBalances = getAccountBalances;
+  functions.AuditTotals = auditTotals;
+  functions.AuditOrdersToReservedBalances = auditOrdersToReservedBalances;
+  functions.UpdateReserveAmounts = updateReserveAmounts;
+  functions.UpdateAccountBalances = updateAccountBalances;
+  return functions;
+};
+

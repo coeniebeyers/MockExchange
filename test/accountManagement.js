@@ -1,5 +1,10 @@
+var balances = require('../DB/InMemory/accountBalances.js');
+var exchangeModules = {
+  balances: balances
+};
+
 var expect = require('expect.js');
-var accountManagement = require('../Exchange/accountManagement.js');
+var accountManagement = require('../Exchange/accountManagement.js')(exchangeModules);
 
 var accountList = [];
 

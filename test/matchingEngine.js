@@ -1,10 +1,15 @@
+
+
 var uuid = require('uuid');
 var expect = require('expect.js');
-var accountManagement = require('../Exchange/accountManagement.js');
+
 var orderLog = require('../DB/InMemory/orderLog.js');
+var balances = require('../DB/InMemory/accountBalances.js');
 var testModules = {
-  orderLog: orderLog
+  orderLog: orderLog,
+  balances: balances
 };
+var accountManagement = require('../Exchange/accountManagement.js')(testModules);
 var exchange = require('../Exchange/exchange.js')(testModules);
 var mockOrders = require('./fixtures/orders.js').MockOrders;
 

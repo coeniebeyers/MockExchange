@@ -2,7 +2,6 @@ var async = require('async');
 //var spawn = require('child_process').spawn;
 //var child = spawn('node', ['../DB/orderLog.js']);  
 var events = require('./eventEmitter.js');
-var accounts = require('./accountManagement.js');
 var config = require('../config.js');
 var util = require('../util.js');
 
@@ -339,10 +338,12 @@ function submitNewOrderForMatching(newOrderFromUI, cb){
 }
 
 module.exports = function(modules){
-  var functions = {};
 
   orderLog = modules.orderLog;
-  
+  accounts = require('./accountManagement.js')(modules);
+
+  var functions = {};
+
   functions.SubmitNewOrderForMatching = submitNewOrderForMatching;
   functions.GetStats = getStats;
   functions.GetBidsAndAsks = getBidsAndAsks;

@@ -2,11 +2,13 @@ var express = require('express');
 var bodyParser = require('body-parser');
 var app = express();
 var orderLog = require('../DB/orderLog.js');
+var balances = require('../DB/InMemory/accountBalances.js');
 var exchangeModules = {
-  orderLog: orderLog
+  orderLog: orderLog,
+  balances: balances
 };
 var exchange = require('./exchange.js')(exchangeModules);
-var accounts = require('./accountManagement.js');
+var accounts = require('./accountManagement.js')(exchangeModules);
 
 app.use(function (req, res, next) {
   res.setHeader('Access-Control-Allow-Origin', 'http://localhost:4200');
