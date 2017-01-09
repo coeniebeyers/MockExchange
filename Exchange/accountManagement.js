@@ -121,6 +121,7 @@ function calculateOpenInterest(bidsAndAsks){
 }
 
 function auditOrdersToReservedBalances(bidsAndAsks){
+  /*
   var accountOrders = calculateOpenInterest(bidsAndAsks);
   for(var accountId = balances.AccountList.length; accountId--;){
     if(accountOrders[accountId] !== undefined){
@@ -130,7 +131,6 @@ function auditOrdersToReservedBalances(bidsAndAsks){
       var reservedCurrency1 = account.reservedCurrency1;
       var reservedCurrency2 = account.reservedCurrency2;
 
-      /*
       if(Math.abs(totalCurrency1-reservedCurrency1) > 0 
           || Math.abs(totalCurrency2-reservedCurrency2) > 0){
         console.log('ERROR: Mismatch between open orders and reserved balance for account:', 
@@ -140,25 +140,22 @@ function auditOrdersToReservedBalances(bidsAndAsks){
         console.log('totalCurrency2:', totalCurrency2);
         console.log('account.reservedCurrency2:', reservedCurrency2);
       }
-      */
     }
   }
+  */
 }
 
 function createAccount(cb){
-  var newAccount = {
+  var newAccountObj = {
     currency1: 0,
     reservedCurrency1: 0,
     currency2: 0,
     reservedCurrency2: 0,
     id: balances.AccountList.length 
   };
-  balances.AccountList.push(newAccount);
-  if(cb){
-    cb(balances.AccountList[newAccount.id]);
-  } else {
-    return balances.AccountList[newAccount.id];
-  }
+  balances.AddNewAccount(newAccountObj, function(done){
+    cb(newAccountObj);
+  });
 }
 
 function getAccountBalances(accountId, cb){

@@ -5,11 +5,13 @@ var accountList = [];
 
 describe('Account', function() {
   it('should be able to add accounts', function(done){
-    var account = accountManagement.CreateAccount();
-    accountList.push(account);
-    account = accountManagement.CreateAccount();
-    accountList.push(account);
-    done();
+    accountManagement.CreateAccount(function(newAccount){
+      accountList.push(newAccount);
+      accountManagement.CreateAccount(function(newAccount){
+        accountList.push(newAccount);
+        done();
+      });
+    });
   });
   it('should be able to return the balance of an account', function(done){
     accountManagement.GetAccountBalances(accountList[0].id, function(accountBalance){ 

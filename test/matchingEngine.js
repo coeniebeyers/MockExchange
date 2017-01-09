@@ -12,19 +12,21 @@ var account = null;
 
 describe('Matching engine', function() {
   it('should be able to add a bid', function(done) {
-    account = accountManagement.CreateAccount();
-    exchange.SubmitNewOrderForMatching(mockOrders[0], function(res){
-      expect(res.submitted).to.equal(true);
-      exchange.GetBidsAndAsks(1, function(bidsAndAsks){
-        expect(bidsAndAsks.bids.length).to.be(1);
-        expect(bidsAndAsks.asks.length).to.be(0);
-        expect(bidsAndAsks.bids[0].timestamp).to.equal(1481536182349);
-        expect(bidsAndAsks.bids[0].id).to.equal('4e367fd0-c050-11e6-992a-730712547a2a');
-        expect(bidsAndAsks.bids[0].accountId).to.equal(0);
-        expect(bidsAndAsks.bids[0].type).to.equal('bid');
-        expect(Number(bidsAndAsks.bids[0].price)).to.equal(750);
-        expect(Number(bidsAndAsks.bids[0].amount)).to.equal(100);
-        done();
+    accountManagement.CreateAccount(function(newAccount){
+      account = newAccount;
+      exchange.SubmitNewOrderForMatching(mockOrders[0], function(res){
+        expect(res.submitted).to.equal(true);
+        exchange.GetBidsAndAsks(1, function(bidsAndAsks){
+          expect(bidsAndAsks.bids.length).to.be(1);
+          expect(bidsAndAsks.asks.length).to.be(0);
+          expect(bidsAndAsks.bids[0].timestamp).to.equal(1481536182349);
+          expect(bidsAndAsks.bids[0].id).to.equal('4e367fd0-c050-11e6-992a-730712547a2a');
+          expect(bidsAndAsks.bids[0].accountId).to.equal(0);
+          expect(bidsAndAsks.bids[0].type).to.equal('bid');
+          expect(Number(bidsAndAsks.bids[0].price)).to.equal(750);
+          expect(Number(bidsAndAsks.bids[0].amount)).to.equal(100);
+          done();
+        });
       });
     });
   });
