@@ -1,7 +1,7 @@
 var config = {};
 
 config.dbConnectionString = 'exchange';
-config.dbCollections = ['orderLog', 'userRegistry'];
+config.dbCollections = ['orderLog', 'balances'];
 config.currency1 = {
   name: 'BTC',
   decimals: 10,
