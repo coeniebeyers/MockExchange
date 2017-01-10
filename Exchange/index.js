@@ -2,7 +2,7 @@ var express = require('express');
 var bodyParser = require('body-parser');
 var app = express();
 var orderLog = require('../DB/orderLog.js');
-var balances = require('../DB/InMemory/accountBalances.js');
+var balances = require('../DB/accountBalances.js');
 var exchangeModules = {
   orderLog: orderLog,
   balances: balances
