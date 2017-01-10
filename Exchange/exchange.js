@@ -5,6 +5,9 @@ var events = require('./eventEmitter.js');
 var config = require('../config.js');
 var util = require('../util.js');
 
+var orderLog;
+var accounts;
+
 var avgOps = 0;
 var orderCount = 0;
 var matchedTrades = 0;
