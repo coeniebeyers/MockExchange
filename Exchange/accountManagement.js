@@ -1,6 +1,8 @@
 var config = require('../config.js');
 var util = require('../util.js');
 
+var balances;
+
 function updateReserveAmountsByParams(accountId, amount, price, orderType){
   if(orderType == 'ask'){
     balances.AddToReservedCurrency1(accountId, amount);
