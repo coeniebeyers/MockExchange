@@ -115,21 +115,6 @@ function updateAccountBalances(match){
       if(err){console.log('ERROR:', err)}
       events.emit('currencyBalancesUpdated', results);
     });
-    /*
-    var account1 = balances.AccountList[match.order1.accountId];
-    account1.currency1 += currency1Amount;
-    account1.currency1 = util.Round(account1.currency1, config.currency1.constant);
-    account1.currency2 -= currency2Amount;
-    account1.currency2 = util.Round(account1.currency2, config.currency2.constant);
-    updateReserveAmountsByParams(account1.id, currency1Amount, price, 'matchedbid');
-
-    var account2 = balances.AccountList[match.order2.accountId];
-    account2.currency1 -= currency1Amount;
-    account2.currency1 = util.Round(account2.currency1, config.currency1.constant);
-    account2.currency2 += currency2Amount;
-    account2.currency2 = util.Round(account2.currency2, config.currency2.constant);
-    updateReserveAmountsByParams(account2.id, currency1Amount, price, 'matchedask');
-    */
   } else {
     console.log('WARNING: unhandled order type');
   } 
