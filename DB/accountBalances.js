@@ -1,6 +1,6 @@
 var mongojs = require('mongojs')
 var config = require('../config.js');
-var util = require('../../util.js');
+var util = require('../util.js');
 var db;
 
 function logError(err){
@@ -21,24 +21,67 @@ function connectToDB(cb){
 
 var accountList = [];
 
-function addToReservedCurrency1(accountId, amount){
-  var account = accountList[accountId];
-  account.reservedCurrency1 += amount;
-  account.reservedCurrency1 = util.Round(account.reservedCurrency1, config.currency1.constant);
+function addToReservedCurrency1(accountId, amount, cb){
+  if(!db){
+    connectToDB(function(){
+      addToReservedCurrency1(accountId, amount, function(res){
+        if(cb){
+          cb(res);
+        }
+      });
+    });
+  } else {
+    var account = accountList[accountId];
+    account.reservedCurrency1 += amount;
+    account.reservedCurrency1 = util.Round(account.reservedCurrency1, config.currency1.constant);
+
+    db.balances.update({_id: accountId}, {$inc: {reservedCurrency1: amount}}, function(err, res){
+      logError(err);
+      if(cb){
+        cb({accountId: accountId, amount: amount, result: res});
+      }
+    });
+  }
 }
 
-function removeFromReservedCurrency1(accountId, amount){
-  addToReservedCurrency1(accountId, -1*amount);
+function removeFromReservedCurrency1(accountId, amount, cb){
+  addToReservedCurrency1(accountId, -1*amount, function(res){
+    if(cb){
+      cb(res);
+    }
+  });
 }
 
-function addToReservedCurrency2(accountId, amount){
-  var account = accountList[accountId];
-  account.reservedCurrency2 += amount;
-  account.reservedCurrency2 = util.Round(account.reservedCurrency2, config.currency2.constant);
+function addToReservedCurrency2(accountId, amount, cb){
+  if(!db){
+    connectToDB(function(){
+      addToReservedCurrency2(accountId, amount, function(res){
+        if(cb){
+          cb(res);
+        }
+      });
+    });
+  } else {
+
+    var account = accountList[accountId];
+    account.reservedCurrency2 += amount;
+    account.reservedCurrency2 = util.Round(account.reservedCurrency2, config.currency2.constant);
+
+    db.balances.update({_id: accountId}, {$inc: {reservedCurrency2: amount}}, function(err, res){
+      logError(err);
+      if(cb){
+        cb({accountId: accountId, amount: amount, result: res});
+      }
+    });
+  }
 }
 
-function removeFromReservedCurrency2(accountId, amount){
-  addToReservedCurrency2(accountId, -1*amount);
+function removeFromReservedCurrency2(accountId, amount, cb){
+  addToReservedCurrency2(accountId, -1*amount, function(res){
+    if(cb){
+      cb(res);
+    }
+  });
 }
 
 function addNewAccount(newAccountObj, cb){
@@ -51,11 +94,15 @@ function addNewAccount(newAccountObj, cb){
       });
     });
   } else {
+    newAccountObj._id = ''+newAccountObj.id;
+    accountList.push(newAccountObj);
     db.balances.insert(newAccountObj, function(err, docs){
       logError(err);
-      if(cb){
-        cb(docs);
-      }
+      db.balances.find({}, function(err, docs){
+        if(cb){
+          cb(docs);
+        }
+      });
     });
   }
 }
@@ -98,3 +145,5 @@ exports.AddToReservedCurrency1 = addToReservedCurrency1;
 exports.AddToReservedCurrency2 = addToReservedCurrency2;
 exports.RemoveFromReservedCurrency1 = removeFromReservedCurrency1;
 exports.RemoveFromReservedCurrency2 = removeFromReservedCurrency2;
+
+exports.AccountList = accountList;
