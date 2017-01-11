@@ -1,3 +1,5 @@
+var async = require('async');
+
 var events = require('./eventEmitter.js');
 var config = require('../config.js');
 var util = require('../util.js');
@@ -35,10 +37,6 @@ function updateReserveAmountsByParams(accountId, amount, price, orderType){
   } 
 }
 
-events.on('reservedCurrencyUpdated', function(res){
-  console.log('Reserved currency updated:', res);
-});
-
 function updateReserveAmounts(order){
   updateReserveAmountsByParams(order.accountId, order.amount, order.price, order.type);
 }
@@ -47,21 +45,77 @@ function updateAccountBalances(match){
   var currency1Amount = match.amount;
   var price = match.order1.price;
   var currency2Amount = price * currency1Amount;
+  var account1Id = match.order1.accountId;
+  var account2Id = match.order2.accountId;
   if(match.order1.type == 'ask'){
-    var account1 = balances.AccountList[match.order1.accountId];
-    account1.currency1 -= currency1Amount;
-    account1.currency1 = util.Round(account1.currency1, config.currency1.constant);
-    account1.currency2 += currency2Amount;
-    account1.currency2 = util.Round(account1.currency2, config.currency2.constant);
-    updateReserveAmountsByParams(account1.id, currency1Amount, price, 'matchedask');
-
-    var account2 = balances.AccountList[match.order2.accountId];
-    account2.currency1 += currency1Amount;
-    account2.currency1 = util.Round(account2.currency1, config.currency1.constant);
-    account2.currency2 -= currency2Amount;
-    account2.currency2 = util.Round(account2.currency2, config.currency2.constant);
-    updateReserveAmountsByParams(account2.id, currency1Amount, price, 'matchedbid');
+    async.parallel([
+      function(cb){
+        balances.RemoveFromCurrency1(account1Id, currency1Amount, function(res){
+          cb(null, res);
+        });
+      },
+      function(cb){
+        balances.AddToCurrency2(account1Id, currency2Amount, function(res){
+          cb(null, res);
+        });
+      },
+      function(cb){
+        updateReserveAmountsByParams(account1Id, currency1Amount, price, 'matchedask');
+        cb(null, null);
+      },
+      function(cb){
+        balances.AddToCurrency1(account2Id, currency1Amount, function(res){
+          cb(null, res);
+        });
+      },
+      function(cb){
+        balances.RemoveFromCurrency2(account2Id, currency2Amount, function(res){
+          cb(null, res);
+        });
+      },
+      function(cb){
+        updateReserveAmountsByParams(account2Id, currency1Amount, price, 'matchedbid');
+        cb(null, null);
+      }
+    ], function(err, results){
+      if(err){console.log('ERROR:', err)}
+      events.emit('currencyBalancesUpdated', results);
+    });
   } else if(match.order1.type == 'bid') { 
+    async.parallel([
+      function(cb){
+        balances.AddToCurrency1(account1Id, currency1Amount, function(res){
+          cb(null, res);
+        });
+      },
+      function(cb){
+        balances.RemoveFromCurrency2(account1Id, currency2Amount, function(res){
+          cb(null, res);
+        });
+      },
+      function(cb){
+        updateReserveAmountsByParams(account1Id, currency1Amount, price, 'matchedbid');
+        cb(null, null);
+      },
+      function(cb){
+        balances.RemoveFromCurrency1(account2Id, currency1Amount, function(res){
+          cb(null, res);
+        });
+      },
+      function(cb){
+        balances.AddToCurrency2(account2Id, currency2Amount, function(res){
+          cb(null, res);
+        });
+      },
+      function(cb){
+        updateReserveAmountsByParams(account2Id, currency1Amount, price, 'matchedask');
+        cb(null, null);
+      }
+    ], function(err, results){
+      if(err){console.log('ERROR:', err)}
+      events.emit('currencyBalancesUpdated', results);
+    });
+    /*
     var account1 = balances.AccountList[match.order1.accountId];
     account1.currency1 += currency1Amount;
     account1.currency1 = util.Round(account1.currency1, config.currency1.constant);
@@ -75,6 +129,9 @@ function updateAccountBalances(match){
     account2.currency2 += currency2Amount;
     account2.currency2 = util.Round(account2.currency2, config.currency2.constant);
     updateReserveAmountsByParams(account2.id, currency1Amount, price, 'matchedask');
+    */
+  } else {
+    console.log('WARNING: unhandled order type');
   } 
 }
 
