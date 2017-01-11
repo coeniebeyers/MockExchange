@@ -1,3 +1,4 @@
+var events = require('./eventEmitter.js');
 var config = require('../config.js');
 var util = require('../util.js');
 
@@ -5,22 +6,38 @@ var balances;
 
 function updateReserveAmountsByParams(accountId, amount, price, orderType){
   if(orderType == 'ask'){
-    balances.AddToReservedCurrency1(accountId, amount);
+    balances.AddToReservedCurrency1(accountId, amount, function(res){
+      events.emit('reservedCurrencyUpdated', res);      
+    });
   } else if(orderType == 'cancelask'){
-    balances.RemoveFromReservedCurrency1(accountId, amount);
+    balances.RemoveFromReservedCurrency1(accountId, amount, function(res){
+      events.emit('reservedCurrencyUpdated', res);      
+    });
   } else if(orderType == 'matchedask'){
-    balances.RemoveFromReservedCurrency1(accountId, amount);
+    balances.RemoveFromReservedCurrency1(accountId, amount, function(res){
+      events.emit('reservedCurrencyUpdated', res);      
+    });
   }  else if(orderType == 'bid'){
     var bidAmount = amount * price;
-    balances.AddToReservedCurrency2(accountId, bidAmount);
+    balances.AddToReservedCurrency2(accountId, bidAmount, function(res){
+      events.emit('reservedCurrencyUpdated', res);      
+    });
   } else if(orderType == 'cancelbid'){
     var bidAmount = amount * price;
-    balances.RemoveFromReservedCurrency2(accountId, bidAmount);
+    balances.RemoveFromReservedCurrency2(accountId, bidAmount, function(res){
+      events.emit('reservedCurrencyUpdated', res); 
+    });
   } else if(orderType == 'matchedbid'){
     var bidAmount = amount * price;
-    balances.RemoveFromReservedCurrency2(accountId, bidAmount);
+    balances.RemoveFromReservedCurrency2(accountId, bidAmount, function(res){
+      events.emit('reservedCurrencyUpdated', res); 
+    });
   } 
 }
+
+events.on('reservedCurrencyUpdated', function(res){
+  console.log('Reserved currency updated:', res);
+});
 
 function updateReserveAmounts(order){
   updateReserveAmountsByParams(order.accountId, order.amount, order.price, order.type);
@@ -147,11 +164,11 @@ function auditOrdersToReservedBalances(bidsAndAsks){
 
 function createAccount(cb){
   var newAccountObj = {
+    id: balances.AccountList.length,
     currency1: 0,
     reservedCurrency1: 0,
     currency2: 0,
     reservedCurrency2: 0,
-    id: balances.AccountList.length 
   };
   balances.AddNewAccount(newAccountObj, function(done){
     cb(newAccountObj);
