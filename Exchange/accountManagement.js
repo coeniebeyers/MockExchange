@@ -223,6 +223,14 @@ function getAccountBalances(accountId, cb){
     var balanceObj = {
       accountId: accountId
     };
+    if(!accountBalance){
+      accountBalance = {
+        currency1: 0,
+        reservedCurrency1: 0,
+        currency2: 0,
+        reservedCurrency2: 0
+      };
+    } 
     balanceObj[config.currency1.name] = accountBalance.currency1; 
     balanceObj['reserved'+config.currency1.name] = accountBalance.reservedCurrency1; 
     balanceObj[config.currency2.name] = accountBalance.currency2; 
