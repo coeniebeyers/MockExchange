@@ -19,6 +19,69 @@ function connectToDB(cb){
   cb();
 };
 
+function addToCurrency1(accountId, amount, cb){
+  if(!db){
+    connectToDB(function(){
+      addToCurrency1(accountId, amount, function(res){
+        if(cb){
+          cb(res);
+        }
+      });
+    });
+  } else {
+    var account = accountList[accountId];
+    account.currency1 += amount;
+    account.currency1 = util.Round(account.currency1, config.currency1.constant);
+
+    db.balances.update({_id: accountId}, {$inc: {currency1: amount}}, function(err, res){
+      logError(err);
+      if(cb){
+        cb({accountId: accountId, amount: amount, result: res});
+      }
+    });
+  }
+}
+
+function removeFromCurrency1(accountId, amount, cb){
+  addToCurrency1(accountId, -1*amount, function(res){
+    if(cb){
+      cb(res);
+    }
+  });
+}
+
+function addToCurrency2(accountId, amount, cb){
+  if(!db){
+    connectToDB(function(){
+      addToCurrency2(accountId, amount, function(res){
+        if(cb){
+          cb(res);
+        }
+      });
+    });
+  } else {
+
+    var account = accountList[accountId];
+    account.currency2 += amount;
+    account.currency2 = util.Round(account.currency2, config.currency2.constant);
+
+    db.balances.update({_id: accountId}, {$inc: {currency2: amount}}, function(err, res){
+      logError(err);
+      if(cb){
+        cb({accountId: accountId, amount: amount, result: res});
+      }
+    });
+  }
+}
+
+function removeFromCurrency2(accountId, amount, cb){
+  addToCurrency2(accountId, -1*amount, function(res){
+    if(cb){
+      cb(res);
+    }
+  });
+}
+
 var accountList = [];
 
 function addToReservedCurrency1(accountId, amount, cb){
@@ -94,56 +157,49 @@ function addNewAccount(newAccountObj, cb){
       });
     });
   } else {
-    newAccountObj._id = ''+newAccountObj.id;
+    newAccountObj._id = newAccountObj.id;
     accountList.push(newAccountObj);
     db.balances.insert(newAccountObj, function(err, docs){
       logError(err);
-      db.balances.find({}, function(err, docs){
-        if(cb){
-          cb(docs);
-        }
+      db.balances.findOne({_id: newAccountObj.id}, function(err, doc){
+        cb(doc);
       });
     });
   }
 }
 
-/*function fetchLog(startTime, endTime, cb){
+function getBalance(accountId, cb){
   if(!db){
     connectToDB(function(){
-      fetchLog(startTime, endTime, function(res){
-        cb(res);
+      getBalance(accountId, function(res){
+        if(cb){
+          cb(res);
+        }
       });
     });
   } else {
-		var queryFilter = {
-				'order2.timestamp': {
-						$gte: startTime,
-						$lte: endTime
-				}
-			};
-    var fieldSelection = {
-			"order2.timestamp":1, 
-			"order1.price":1, 
-			"amount":1
-    };
-		
-		db.orderLog.find(queryFilter, fieldSelection, function(err, docs){
+    db.balances.findOne({_id: accountId}, function(err, doc){
       logError(err);
-      cb(docs);
+      cb(doc);
     });
   }
-}*/
+}
 
 function closeDB(){
   db.close();
 }
 
 exports.AddNewAccount = addNewAccount;
-exports.CloseDB = closeDB;
-
+exports.GetBalance = getBalance;
+exports.AddToCurrency1 = addToCurrency1;
+exports.AddToCurrency2 = addToCurrency2;
+exports.RemoveFromCurrency1 = removeFromCurrency1;
+exports.RemoveFromCurrency2 = removeFromCurrency2;
 exports.AddToReservedCurrency1 = addToReservedCurrency1;
 exports.AddToReservedCurrency2 = addToReservedCurrency2;
 exports.RemoveFromReservedCurrency1 = removeFromReservedCurrency1;
 exports.RemoveFromReservedCurrency2 = removeFromReservedCurrency2;
 
 exports.AccountList = accountList;
+
+exports.CloseDB = closeDB;
