@@ -42,7 +42,7 @@ function updateReserveAmounts(order){
 }
 
 function updateAccountBalances(match){
-  var currency1Amount = match.amount;
+  var currency1Amount = Number(match.amount);
   var price = match.order1.price;
   var currency2Amount = price * currency1Amount;
   var account1Id = match.order1.accountId;
@@ -79,7 +79,7 @@ function updateAccountBalances(match){
       }
     ], function(err, results){
       if(err){console.log('ERROR:', err)}
-      events.emit('currencyBalancesUpdated', results);
+      events.emit('currencyBalanceUpdated', results);
     });
   } else if(match.order1.type == 'bid') { 
     async.parallel([
@@ -113,7 +113,7 @@ function updateAccountBalances(match){
       }
     ], function(err, results){
       if(err){console.log('ERROR:', err)}
-      events.emit('currencyBalancesUpdated', results);
+      events.emit('currencyBalanceUpdated', results);
     });
   } else {
     console.log('WARNING: unhandled order type');
@@ -206,7 +206,7 @@ function auditOrdersToReservedBalances(bidsAndAsks){
 
 function createAccount(cb){
   var newAccountObj = {
-    id: balances.AccountList.length,
+    id: ''+balances.AccountList.length,
     currency1: 0,
     reservedCurrency1: 0,
     currency2: 0,
@@ -217,39 +217,36 @@ function createAccount(cb){
   });
 }
 
+// This function enriches the information it pulls from DB/accountBalances
 function getAccountBalances(accountId, cb){
-  var account = balances.AccountList[accountId];
-  var balanceObj = {
-    accountId: accountId
-  };
-  balanceObj[config.currency1.name] = account.currency1; 
-  balanceObj['reserved'+config.currency1.name] = account.reservedCurrency1; 
-  balanceObj[config.currency2.name] = account.currency2; 
-  balanceObj['reserved'+config.currency2.name] = account.reservedCurrency2; 
-  if(cb){
+  balances.GetBalance(accountId, function(accountBalance){
+    var balanceObj = {
+      accountId: accountId
+    };
+    balanceObj[config.currency1.name] = accountBalance.currency1; 
+    balanceObj['reserved'+config.currency1.name] = accountBalance.reservedCurrency1; 
+    balanceObj[config.currency2.name] = accountBalance.currency2; 
+    balanceObj['reserved'+config.currency2.name] = accountBalance.reservedCurrency2; 
     cb(balanceObj);
-  } else {
-    return balanceObj;
-  }
+  });
 }
 
 function adjustAccountBalance(obj, cb){
-  var account = balances.AccountList[obj.accountId];
-  
   if(obj.currency == config.currency1.name){
-    var adjustment = util.Round(Number(obj.amount), config.currency1.constant);
-    account.currency1 += adjustment;
+    balances.AddToCurrency1(obj.accountId, Number(obj.amount), function(res){
+      getAccountBalances(obj.accountId, function(accountBalance){
+        events.emit('currencyBalanceUpdated', res);
+        cb(accountBalance);
+      });
+    });
   } else if (obj.currency == config.currency2.name){
-    var adjustment = util.Round(Number(obj.amount), config.currency2.constant);
-    account.currency2 += adjustment;
+    balances.AddToCurrency2(obj.accountId, Number(obj.amount), function(res){
+      getAccountBalances(obj.accountId, function(accountBalance){
+        events.emit('currencyBalanceUpdated', res);
+        cb(accountBalance);
+      });
+    });
   } 
- 
-  var balanceObj = getAccountBalances(obj.accountId);
-  if(cb){
-    cb(balanceObj);
-  } else {
-    return balanceObj;
-  }
 }
 
 module.exports = function(modules){
