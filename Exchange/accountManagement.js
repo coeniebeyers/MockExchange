@@ -1,4 +1,5 @@
 var async = require('async');
+var uuid = require('uuid').v1;
 
 var events = require('./eventEmitter.js');
 var config = require('../config.js');
@@ -206,7 +207,6 @@ function auditOrdersToReservedBalances(bidsAndAsks){
 
 function createAccount(cb){
   var newAccountObj = {
-    id: ''+balances.AccountList.length,
     currency1: 0,
     reservedCurrency1: 0,
     currency2: 0,
