@@ -1,16 +1,18 @@
 var uuid = require('uuid');
 var expect = require('expect.js');
 
+// Dependency injection
 var orderLog = require('../DB/InMemory/orderLog.js');
 var balances = require('../DB/InMemory/accountBalances.js');
+//var balances = require('../DB/accountBalances.js');
 var testModules = {
   orderLog: orderLog,
   balances: balances
 };
 var accountManagement = require('../Exchange/accountManagement.js')(testModules);
 var exchange = require('../Exchange/exchange.js')(testModules);
-var mockOrders = require('./fixtures/orders.js').MockOrders;
 
+var mockOrders = require('./fixtures/orders.js').MockOrders;
 var account = null;
 
 describe('Matching engine', function() {
