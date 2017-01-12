@@ -1,6 +1,7 @@
 var express = require('express');
 var bodyParser = require('body-parser');
 var app = express();
+// Dependancy injection
 var orderLog = require('../DB/orderLog.js');
 var balances = require('../DB/accountBalances.js');
 var exchangeModules = {
@@ -23,6 +24,15 @@ app.use(bodyParser.urlencoded({
 }));
 
 app.use(bodyParser.json());
+
+app.use(function (error, req, res, next) {
+  if (!error) {
+    next();
+  } else {
+    console.error(error.stack);
+    res.send(500);
+  }
+});
 
 app.get('/createNewAccount', function (req, res) {
 	accounts.CreateAccount(function(newAccount){
