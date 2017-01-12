@@ -56,6 +56,8 @@ function removeFromReservedCurrency2(accountId, amount, cb){
 }
 
 function addNewAccount(newAccountObj, cb){
+  newAccountObj.id = accountList.length;
+  newAccountObj._id = accountList.length;
   accountList.push(newAccountObj);
   cb(newAccountObj);
 }
@@ -75,5 +77,3 @@ exports.AddToReservedCurrency1 = addToReservedCurrency1;
 exports.AddToReservedCurrency2 = addToReservedCurrency2;
 exports.RemoveFromReservedCurrency1 = removeFromReservedCurrency1;
 exports.RemoveFromReservedCurrency2 = removeFromReservedCurrency2;
-
-exports.AccountList = accountList;
