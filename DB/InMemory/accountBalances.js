@@ -60,7 +60,13 @@ function addNewAccount(newAccountObj, cb){
   cb(newAccountObj);
 }
 
+function getBalance(accountId, cb){
+  cb(accountList[accountId]);
+};
 
+
+exports.AddNewAccount = addNewAccount;
+exports.GetBalance = getBalance;
 exports.AddToCurrency1 = addToCurrency1;
 exports.AddToCurrency2 = addToCurrency2;
 exports.RemoveFromCurrency1 = removeFromCurrency1;
@@ -69,6 +75,5 @@ exports.AddToReservedCurrency1 = addToReservedCurrency1;
 exports.AddToReservedCurrency2 = addToReservedCurrency2;
 exports.RemoveFromReservedCurrency1 = removeFromReservedCurrency1;
 exports.RemoveFromReservedCurrency2 = removeFromReservedCurrency2;
-exports.AddNewAccount = addNewAccount;
 
 exports.AccountList = accountList;
