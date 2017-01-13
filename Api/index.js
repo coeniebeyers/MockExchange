@@ -23,14 +23,26 @@ app.get('/getCandleSticks', function (req, res) {
 	candleStickGenerator.GetCandleStickData(timeInterval, function(candleSticks){
 		res.json(candleSticks);
 	});
-})
+});
 
 app.post('/updateTimeInterval', function (req, res) {
   timeInterval = req.body.timeInterval;
   console.log('time interval updated to : ', timeInterval);
   res.json({msg: "success"});
-})
+});
 
+app.post('/authenticate', function (req, res) {
+  console.log('body:', req.body);
+  var username = req.body.username;
+  var password = req.body.password;
+  res.json({
+    id: 1234,
+    username: 'peterm',
+    firstName: 'Peter',
+    lastName: 'Munnings',
+    token: 'fake-jwt-token'
+  });
+});
 
 app.listen(3032, function () {
     console.log('Springblock API running on port 3032')

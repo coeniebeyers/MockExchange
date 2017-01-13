@@ -13,7 +13,7 @@ export class GraphService {
   }
 
 	setConfigValue(name, value) {
-			this.config[name] = value;
+	  this.config[name] = value;
 		if(name=='timeInterval'){
 			this.timeIntervalUpdated.emit(value);
 		}

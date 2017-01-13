@@ -16,13 +16,12 @@ export class LoginComponent {
   ){}
 
   login() {
-    console.log('login clicked');
     this.loading = true;
     this.authenticationService.login(this.model.username, this.model.password)
       .subscribe(
         data => {
+          console.log('currentUser: ', localStorage.getItem('currentUser'));
           //this.router.navigate([this.returnUrl]);
-          console.log('login result: ', data);
         },
         error => {
           this.alertService.error(error);
