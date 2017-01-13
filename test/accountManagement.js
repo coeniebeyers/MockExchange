@@ -145,11 +145,10 @@ describe('Account', function() {
         accountManagement.GetAccountBalances(accountList[0].id, function(balances1){
           expect(balances1.accountId).to.be(accountList[0].id);
           expect(balances1.reservedBTC).to.be(oldBalancesAccount1.reservedBTC - match.amount);
-
           accountManagement.GetAccountBalances(accountList[1].id, function(balances2){
             expect(balances2.accountId).to.be(accountList[1].id);
             var price = match.order1.price;
-            expect(balances2.reservedUSD).to.be(oldBalancesAccount2.reservedUSD - match.amount * price);
+            expect(balances2.reservedUSD).to.be(oldBalancesAccount2.reservedUSD-match.amount*price);
             done();
           });
         });
@@ -183,7 +182,6 @@ describe('Account', function() {
           expect(balances1.accountId).to.be(accountList[0].id);
           var price = match.order1.price;
           expect(balances1.reservedUSD).to.be(oldBalancesAccount1.reservedUSD - match.amount*price);
-
           accountManagement.GetAccountBalances(accountList[1].id, function(balances2){
             expect(balances2.accountId).to.be(accountList[1].id);
             expect(balances2.reservedBTC).to.be(oldBalancesAccount2.reservedBTC - match.amount);

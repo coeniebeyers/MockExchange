@@ -3,6 +3,7 @@ var expect = require('expect.js');
 
 // Dependency injection
 var orderLog = require('../DB/InMemory/orderLog.js');
+//var orderLog = require('../DB/orderLog.js');
 var balances = require('../DB/InMemory/accountBalances.js');
 //var balances = require('../DB/accountBalances.js');
 var testModules = {
