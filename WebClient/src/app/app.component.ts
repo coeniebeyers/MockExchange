@@ -1,18 +1,19 @@
-import {Component, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
-import {GoogleChartComponent} from './google-chart/google-chart.component';
-import {LoginComponent} from './login/login.component';
-import {Http, Response, Headers, RequestOptions } from "@angular/http";
-import {Observable} from 'rxjs/Rx';
-import {GraphService} from './_services/graph.service.ts';
-import 'rxjs/add/operator/map';
+import { Component, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
+import { GoogleChartComponent } from './google-chart/google-chart.component';
+import { LoginComponent } from './login/login.component';
+import { Http, Response, Headers, RequestOptions } from "@angular/http";
+import { Observable } from 'rxjs/Rx';
+import { GraphService } from './_services/graph.service.ts';
+import { AuthenticationService } from './_services/authentication.service.ts';
 import { ComponentsHelper } from 'ng2-bootstrap';
+import 'rxjs/add/operator/map';
 
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css'],
-  providers: [GraphService]
+  providers: [GraphService, AuthenticationService]
 })
 
 export class AppComponent {
@@ -30,6 +31,7 @@ export class AppComponent {
   constructor(
     private http: Http,
     private graphService: GraphService,
+    private authenticationService: AuthenticationService,
     private componentsHelper: ComponentsHelper, 
     private vcr: ViewContainerRef
     ) {
@@ -38,6 +40,10 @@ export class AppComponent {
 
   ngOnInit() {
 		this.graphService.setConfigValue("timeInterval", this.timeInterval);
+		this.authenticationService.userLoggedIn.subscribe((user) => {
+      console.log('new user has just logged in', user);
+      this.login();
+		});
     this.fetchData();
     setInterval(() =>{
       this.fetchData();
